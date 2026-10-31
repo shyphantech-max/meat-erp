@@ -11,6 +11,7 @@ import { NAV } from '@/data/nav'
 import { moduleForPath } from '@/lib/rbac'
 import { cn } from '@/lib/utils'
 import { Header } from './Header'
+import { QuickCreateFab } from './QuickCreate'
 import { Sidebar, useNavBadges, useRoleNav } from './Sidebar'
 
 const ALL_ITEMS = NAV.flatMap((g) => g.items)
@@ -20,12 +21,12 @@ function MobileTabBar({ onMore }: { onMore: () => void }) {
   const t = useT()
   const session = useSession()
   const badges = useNavBadges()
-  const tabs = session.tabs.map((k) => ALL_ITEMS.find((i) => i.key === k)!).filter(Boolean)
+  const tabs = session.tabs.slice(0, 3).map((k) => ALL_ITEMS.find((i) => i.key === k)!).filter(Boolean)
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      {tabs.map((x) => {
+      {tabs.map((x, i) => {
         const count = x.badge ? badges[x.badge] : 0
-        return (
+        const tab = (
           <NavLink key={x.key} to={x.path} end={x.path === '/'} className={({ isActive }) => cn('relative flex h-16 flex-col items-center justify-center gap-1 px-1 text-[10.5px] font-medium', isActive ? 'text-brand' : 'text-muted-foreground')}>
             {({ isActive }) => (
               <>
@@ -37,7 +38,10 @@ function MobileTabBar({ onMore }: { onMore: () => void }) {
             )}
           </NavLink>
         )
+        // the raised "+" sits in the middle of the bar
+        return i === 2 ? [<QuickCreateFab key="fab" />, tab] : tab
       })}
+      {tabs.length < 3 && <QuickCreateFab />}
       <button onClick={onMore} className="flex h-16 flex-col items-center justify-center gap-1 text-[10.5px] font-medium text-muted-foreground">
         <Grid3x3 className="size-[22px]" />
         {t('More')}

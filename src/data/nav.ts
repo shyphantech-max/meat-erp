@@ -1,5 +1,5 @@
 import {
-  BarChart3, Boxes, ClipboardCheck, FileText, HandCoins, LayoutDashboard, Scale, Settings, Ship, ShoppingCart, Store, Truck, Users, Wallet, type LucideIcon,
+  BarChart3, Boxes, ShieldCheck, ClipboardCheck, FileText, HandCoins, LayoutDashboard, Scale, Settings, Ship, ShoppingCart, Store, Truck, Users, Wallet, type LucideIcon,
 } from 'lucide-react'
 
 export interface NavItem {
@@ -48,5 +48,11 @@ export const NAV: NavGroup[] = [
       { key: 'reports', label: 'Reports', path: '/reports', icon: BarChart3 },
     ],
   },
-  { label: 'System', items: [{ key: 'settings', label: 'Settings', path: '/settings', icon: Settings }] },
+  {
+    label: 'System',
+    items: [
+      { key: 'access', label: 'Users & Access', path: '/access', icon: ShieldCheck },
+      { key: 'settings', label: 'Settings', path: '/settings', icon: Settings },
+    ],
+  },
 ]

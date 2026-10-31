@@ -20,7 +20,11 @@ export default function Stock() {
   const [sp, setSp] = useSearchParams()
   const d = useDriverDay()
   const slip = useDialog<ID>()
-  const [sheet, setSheet] = useState<'return' | 'loss' | null>(sp.get('action') === 'return' ? 'return' : null)
+  const action = sp.get('action')
+  const [sheet, setSheet] = useState<'return' | 'loss' | null>(action === 'return' || action === 'loss' ? action : null)
+  useEffect(() => {
+    if (action === 'return' || action === 'loss') setSheet(action)
+  }, [action])
   const items = Object.entries(d.van).filter(([, q]) => q > 0)
   const cap = d.vehicle?.capacityKg ?? 0
   const close = () => {

@@ -25,6 +25,7 @@ const Reports = lazy(() => import('@/modules/reports'))
 const Settings = lazy(() => import('@/modules/settings'))
 const DriverApp = lazy(() => import('@/modules/driver-app'))
 const Login = lazy(() => import('@/modules/auth/Login'))
+const Access = lazy(() => import('@/modules/access'))
 
 // demo convenience: ?lang=ar / ?lang=en in any URL switches the interface language
 const urlLang = new URLSearchParams(window.location.search).get('lang')
@@ -64,12 +65,13 @@ export default function App() {
                 <Route path="accounts" element={<Accounts />} />
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
+                <Route path="access" element={<Access />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>
           </Suspense>
         </BrowserRouter>
-        <Toaster position={lang === 'ar' ? 'top-left' : 'top-right'} richColors closeButton dir={lang === 'ar' ? 'rtl' : 'ltr'} />
+        <Toaster position={lang === 'ar' ? 'top-left' : 'top-right'} richColors closeButton dir={lang === 'ar' ? 'rtl' : 'ltr'} mobileOffset={{ top: 'calc(env(safe-area-inset-top) + 64px)', left: 12, right: 12 }} />
       </ConfirmProvider>
     </TooltipProvider>
   )

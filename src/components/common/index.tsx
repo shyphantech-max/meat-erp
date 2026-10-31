@@ -58,7 +58,7 @@ export function useAction() {
 export function PageHeader({ title, description, actions, icon: Icon, badge }: { title: string; description?: string; actions?: ReactNode; icon?: LucideIcon; badge?: ReactNode }) {
   const t = useT()
   return (
-    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+    <div className="mb-4 flex flex-wrap items-start justify-between gap-3 sm:mb-5">
       <div className="flex min-w-0 items-start gap-3">
         {Icon && (
           <div className="mt-0.5 hidden size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand sm:flex">
@@ -67,13 +67,13 @@ export function PageHeader({ title, description, actions, icon: Icon, badge }: {
         )}
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-[22px] leading-tight font-bold tracking-tight text-brand-ink">{t(title)}</h1>
+            <h1 className="text-[19px] leading-tight font-bold tracking-tight text-brand-ink sm:text-[22px]">{t(title)}</h1>
             {badge}
           </div>
-          {description && <p className="mt-1 max-w-3xl text-[13px] text-muted-foreground">{t(description)}</p>}
+          {description && <p className="mt-1 line-clamp-2 max-w-3xl text-[12.5px] text-muted-foreground sm:line-clamp-none sm:text-[13px]">{t(description)}</p>}
         </div>
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto [&>*]:max-sm:flex-1">{actions}</div>}
     </div>
   )
 }
@@ -116,18 +116,18 @@ export function KpiCard({ label, value, sub, icon: Icon, tone = 'brand', to, cla
   return (
     <Card
       onClick={to ? () => nav(to) : undefined}
-      className={cn('group relative gap-0 p-4 transition-all', to && 'cursor-pointer hover:border-brand/40 hover:shadow-md', alert && 'border-warning/50', className)}
+      className={cn('group relative min-w-0 gap-0 p-3.5 transition-all sm:p-4', to && 'cursor-pointer hover:border-brand/40 hover:shadow-md active:scale-[0.99]', alert && 'border-warning/50', className)}
     >
       <div className="flex items-start justify-between gap-2">
-        <p className="text-[12px] font-medium text-muted-foreground">{t(label)}</p>
+        <p className="line-clamp-2 text-[11.5px] leading-snug font-medium text-muted-foreground sm:text-[12px]">{t(label)}</p>
         {Icon && (
-          <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', toneBox[tone])}>
-            <Icon className="size-4" />
+          <span className={cn('flex size-7 shrink-0 items-center justify-center rounded-lg sm:size-8', toneBox[tone])}>
+            <Icon className="size-3.5 sm:size-4" />
           </span>
         )}
       </div>
-      <div className="mt-1 text-[22px] leading-tight font-bold tracking-tight text-brand-ink tabular">{value}</div>
-      {sub && <div className="mt-1 text-[12px] text-muted-foreground">{sub}</div>}
+      <div className="mt-1 truncate text-[17px] leading-tight font-bold tracking-tight text-brand-ink tabular sm:text-[22px]">{value}</div>
+      {sub && <div className="mt-1 line-clamp-2 text-[11.5px] text-muted-foreground sm:text-[12px]">{sub}</div>}
       {to && <ArrowUpRight className="flip-rtl absolute end-3 bottom-3 size-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />}
     </Card>
   )

@@ -153,6 +153,13 @@
   }
 }
 
+@media (max-width: 1023px) {
+  /* app-like feel on phones & tablets only */
+  html { -webkit-text-size-adjust: 100%; }
+  nav a, nav button { -webkit-user-select: none; user-select: none; }
+  input, select, textarea { font-size: 16px !important; } /* stops iOS zoom on focus */
+}
+
 @layer utilities {
   .scrollbar-thin {
     scrollbar-width: thin;

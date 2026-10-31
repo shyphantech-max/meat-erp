@@ -3,9 +3,10 @@
  * Responsive: on desktop it uses the platform layout (sidebar + header, driver menu only);
  * on phones it is a full-screen mobile app with a top bar and bottom tabs.
  */
-import { useEffect, type ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { NavLink, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
-import { CalendarDays, HandCoins, Home as HomeIcon, LogOut, Package, Route as RouteIcon, Scale, Truck } from 'lucide-react'
+import { CalendarDays, HandCoins, Home as HomeIcon, LogOut, Package, PackageMinus, Plus, Route as RouteIcon, Scale, ShoppingBag, Truck, Undo2, Wallet } from 'lucide-react'
+import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { toast } from 'sonner'
 import { BrandLogo, ErrorBoundary } from '@/components/common'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -35,6 +36,47 @@ function useDriverTabs() {
     { to: '/driver/stock', label: 'Stock', icon: Package, badge: 0 },
     { to: '/driver/settle', label: 'Settle', icon: Scale, badge: 0 },
   ]
+}
+
+const DRIVER_ACTIONS = [
+  { to: '/driver/sale', label: 'Van sale', icon: ShoppingBag, tone: 'bg-brand-soft text-brand' },
+  { to: '/driver/collect?mode=old', label: 'Collect old dues', icon: HandCoins, tone: 'bg-success-soft text-success' },
+  { to: '/driver/stock', label: 'Van stock', icon: Package, tone: 'bg-muted text-foreground' },
+  { to: '/driver/stock?action=return', label: 'Return to warehouse', icon: Undo2, tone: 'bg-info-soft text-info' },
+  { to: '/driver/stock?action=loss', label: 'Record loss', icon: PackageMinus, tone: 'bg-danger-soft text-danger' },
+  { to: '/driver/collect?view=outstanding', label: 'Outstanding', icon: Wallet, tone: 'bg-maroon-soft text-maroon' },
+]
+
+/** raised centre "+" of the driver tab bar */
+function DriverFab() {
+  const t = useT()
+  const nav = useNavigate()
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <div className="relative flex items-start justify-center">
+        <button onClick={() => setOpen(true)} aria-label={t('Create')} className="absolute -top-8 flex size-[68px] items-center justify-center rounded-full bg-brand text-white shadow-[0_8px_20px_-6px_rgba(4,122,63,0.65)] ring-[6px] ring-background active:scale-95">
+          <Plus className="size-8" strokeWidth={2.5} />
+        </button>
+        <span className="absolute bottom-2 text-[10.5px] font-medium text-brand">{t('Actions')}</span>
+      </div>
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="bottom" className="px-4 pt-3">
+          <SheetTitle className="sr-only">{t('Actions')}</SheetTitle>
+          <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-muted" />
+          <div className="mb-3 px-1 text-[15px] font-semibold">{t('Quick actions')}</div>
+          <div className="grid grid-cols-3 gap-2 pb-4">
+            {DRIVER_ACTIONS.map((a) => (
+              <button key={a.to} onClick={() => { setOpen(false); nav(a.to) }} className="flex flex-col items-center gap-1.5 rounded-xl border bg-card p-3 text-center active:bg-muted">
+                <span className={cn('flex size-11 items-center justify-center rounded-2xl', a.tone)}><a.icon className="size-5" /></span>
+                <span className="text-[12px] leading-tight font-semibold">{t(a.label)}</span>
+              </button>
+            ))}
+          </div>
+        </SheetContent>
+      </Sheet>
+    </>
+  )
 }
 const TITLES: [RegExp, string][] = [
   [/^\/driver\/?$/, 'Home'], [/^\/driver\/route/, 'My route'], [/^\/driver\/stop/, 'Delivery stop'], [/^\/driver\/collect/, 'Collect payment'],
@@ -162,10 +204,10 @@ function MobileTopBar() {
 /** phones: bottom tab bar */
 function TabBar() {
   const t = useT()
-  const tabs = useDriverTabs()
+  const tabs = useDriverTabs().filter((x) => x.to !== '/driver/stock')
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t bg-card/95 pb-[env(safe-area-inset-bottom)] backdrop-blur lg:hidden">
-      {tabs.map((x) => (
+      {tabs.flatMap((x, i) => [...(i === 2 ? [<DriverFab key="fab" />] : []), (
         <NavLink
           key={x.to}
           to={x.to}
@@ -181,7 +223,7 @@ function TabBar() {
             </>
           )}
         </NavLink>
-      ))}
+      )])}
     </nav>
   )
 }
