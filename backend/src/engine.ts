@@ -157,6 +157,30 @@ export function createEngine(storage: Storage, opts: { secret: string; seedSecre
       return ok ? { status: 200, body: { ok: true, records: Object.values(changes).reduce((n, c) => n + c.upsert.length, 0) } } : { status: 409, body: { error: 'Conflict' } }
     }
 
+    // wipe business data, keeping logins/roles (+ optionally drivers & vehicles) - local `catalyst serve` only
+    if (path === '/admin/reset' && req.method === 'POST') {
+      if (!opts.seedSecret || req.query.get('secret') !== opts.seedSecret) return { status: 403, body: { error: 'Forbidden' } }
+      const keepFleet = req.query.get('keepFleet') === '1'
+      const keepIds = new Set((req.query.get('keepCustomers') ?? '').split(',').filter(Boolean))
+      const KEEP = new Set(['users', 'roles', ...(keepFleet ? ['drivers', 'vehicles'] : [])])
+      const today = todayKey()
+      const r = await mutate((d) => {
+        const rec = d as unknown as Record<string, Row[]>
+        for (const c of COLLS(d)) {
+          if (KEEP.has(c)) continue
+          rec[c] = c === 'customers' ? rec[c].filter((x) => keepIds.has(String(x.id))) : []
+        }
+        if (!keepFleet) for (const u of d.users) if (u.driverId) u.active = false
+        for (const dr of d.drivers) dr.warehouseId = ''
+        d.counters = {}
+        d.settings = { ...d.settings, goLiveDate: today, seededAt: today }
+        return undefined
+      })
+      if (!r.ok) return { status: 409, body: { error: r.error } }
+      const deleted = Object.values(r.changes).reduce((n, c) => n + c.delete.length, 0)
+      return { status: 200, body: { ok: true, version: r.version, deleted } }
+    }
+
     if (path === '/auth/login' && req.method === 'POST') {
       const { email, password } = req.body ?? {}
       const state = await storage.load()
