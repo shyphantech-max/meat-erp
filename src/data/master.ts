@@ -7,17 +7,17 @@ const PRODUCTS: P[] = [
   ['CH-FWC-1200', 'Frozen Whole Chicken 1200g', 'دجاج كامل مجمد ١٢٠٠ جم', 'chicken', 'frozen', 12, 'Carton', 9.0, 11.25, 3000, 365, 'Turkey'],
   ['CH-FRS-900', 'Fresh Whole Chicken 900g', 'دجاج كامل طازج ٩٠٠ جم', 'chicken', 'fresh', 9, 'Crate', 10.3, 13.0, 600, 5, 'Saudi Arabia'],
   ['CH-BRS-IQF', 'Frozen Chicken Breast Boneless (IQF)', 'صدور دجاج مجمدة بدون عظم', 'chicken', 'frozen', 10, 'Carton', 16.5, 20.5, 2000, 365, 'Brazil'],
-  ['CH-BRS-CHL', 'Chilled Chicken Breast Fillet', 'فيليه صدور دجاج مبرد', 'chicken', 'chilled', 5, 'Tray carton', 18.9, 24.0, 800, 10, 'Saudi Arabia'],
+  ['CH-BRS-CHL', 'Chilled Chicken Breast Fillet', 'فيليه صدور دجاج مبرد', 'chicken', 'chilled', 5, 'Tray carton', 18.9, 24.0, 1200, 10, 'Saudi Arabia'],
   ['CH-WNG-FRZ', 'Frozen Chicken Wings', 'أجنحة دجاج مجمدة', 'chicken', 'frozen', 10, 'Carton', 11.8, 14.75, 1500, 365, 'Brazil'],
   ['CH-LQ-FRZ', 'Frozen Chicken Leg Quarters', 'أرباع أفخاذ دجاج مجمدة', 'chicken', 'frozen', 15, 'Carton', 7.4, 9.25, 4000, 365, 'Brazil'],
   ['CH-THG-BL', 'Frozen Boneless Chicken Thigh', 'أفخاذ دجاج مجمدة بدون عظم', 'chicken', 'frozen', 10, 'Carton', 14.2, 17.9, 1200, 365, 'Brazil'],
   ['CH-DRM-FRZ', 'Frozen Chicken Drumsticks', 'دبابيس دجاج مجمدة', 'chicken', 'frozen', 10, 'Carton', 10.2, 12.9, 1000, 365, 'Turkey'],
   ['MT-CAR-AUS', 'Frozen Mutton Carcass (Australia)', 'ذبيحة ضأن مجمدة أسترالي', 'mutton', 'frozen', 18, 'Carcass', 24.0, 29.5, 2500, 365, 'Australia'],
-  ['MT-CAR-NAE', 'Fresh Naeemi Mutton Carcass', 'ذبيحة نعيمي طازجة', 'mutton', 'fresh', 16, 'Carcass', 37.5, 46.0, 300, 4, 'Saudi Arabia'],
+  ['MT-CAR-NAE', 'Fresh Naeemi Mutton Carcass', 'ذبيحة نعيمي طازجة', 'mutton', 'fresh', 16, 'Carcass', 37.5, 46.0, 1500, 4, 'Saudi Arabia'],
   ['MT-BL-NZ', 'Frozen Boneless Mutton (New Zealand)', 'لحم ضأن مجمد بدون عظم نيوزيلندي', 'mutton', 'frozen', 20, 'Carton', 32.0, 39.5, 1500, 365, 'New Zealand'],
   ['MT-LEG-CHL', 'Chilled Boneless Lamb Leg', 'فخذ ضأن مبرد بدون عظم', 'mutton', 'chilled', 10, 'Carton', 42.0, 51.0, 500, 45, 'Australia'],
   ['MT-CUT-IND', 'Frozen Mutton Cuts (Shoulder & Ribs)', 'قطع ضأن مجمدة (كتف وريش)', 'mutton', 'frozen', 20, 'Carton', 21.5, 26.5, 2000, 365, 'India'],
-  ['MT-MINCE', 'Chilled Mutton Mince', 'لحم ضأن مفروم مبرد', 'mutton', 'chilled', 5, 'Tray carton', 34.0, 42.0, 250, 6, 'Saudi Arabia'],
+  ['MT-MINCE', 'Chilled Mutton Mince', 'لحم ضأن مفروم مبرد', 'mutton', 'chilled', 5, 'Tray carton', 34.0, 42.0, 500, 6, 'Saudi Arabia'],
 ]
 export const masterProducts = (): Product[] =>
   PRODUCTS.map(([code, name, nameAr, species, category, cartonKg, packLabel, costPrice, sellPrice, reorderLevelKg, shelfLifeDays, origin], i) => ({
@@ -26,7 +26,7 @@ export const masterProducts = (): Product[] =>
 
 export const masterWarehouses = (): Warehouse[] => [
   { id: 'wh_1', code: 'RUH-CS', name: 'Riyadh Central Cold Store', nameAr: 'مستودع الرياض المركزي المبرد', city: 'Riyadh', address: 'Al Sulay Industrial Area, Street 112, Riyadh', capacityKg: 450000, manager: 'Tariq Al Mutairi' },
-  { id: 'wh_2', code: 'JED-PS', name: 'Jeddah Port Cold Store', nameAr: 'مستودع جدة الإسلامي المبرد', city: 'Jeddah', address: 'Al Khumrah Logistics Zone, Jeddah', capacityKg: 300000, manager: 'Hassan Bakr' },
+  { id: 'wh_2', code: 'JED-PS', name: 'Jeddah Port Cold Store', nameAr: 'مستودع ميناء جدة المبرد', city: 'Jeddah', address: 'Al Khumrah Logistics Zone, Jeddah', capacityKg: 300000, manager: 'Hassan Bakr' },
   { id: 'wh_3', code: 'DMM-DH', name: 'Dammam Distribution Hub', nameAr: 'مركز توزيع الدمام', city: 'Dammam', address: '2nd Industrial City, Dammam', capacityKg: 180000, manager: 'Majed Al Ghamdi' },
 ]
 
@@ -61,7 +61,7 @@ export const CUSTOMERS: C[] = [
   ['Al Yasmin Supermarket', 'سوبرماركت الياسمين', 'supermarket', 'Riyadh', 'Al Yasmin', 'Rakesh Menon', 60000, 21, 'credit', 3],
   ['Dar Al Kabsa Restaurant', 'مطعم دار الكبسة', 'restaurant', 'Riyadh', 'Al Sulimaniyah', 'Mansour Al Harthi', 30000, 15, 'cash', 3],
   ['Al Malqa Hotel Suites', 'أجنحة الملقا الفندقية', 'hotel', 'Riyadh', 'Al Malqa', 'Elena Petrova', 70000, 30, 'credit', 3],
-  ['Hayat Al Najd Shawarma', 'شاورما حياة نجد', 'restaurant', 'Riyadh', 'Al Murabba', 'Bilal Haddad', 15000, 7, 'credit', 4],
+  ['Hayat Al Najd Shawarma', 'شاورما حياة نجد', 'restaurant', 'Riyadh', 'Al Murabba', 'Bilal Haddad', 10000, 7, 'credit', 4],
   ['Al Rawdah Meat Market', 'سوق الروضة للحوم', 'wholesale', 'Riyadh', 'Al Rawdah', 'Khalid Al Otaibi', 180000, 30, 'credit', 4],
   ['Al Sulimaniyah Mini Market', 'ميني ماركت السليمانية', 'supermarket', 'Riyadh', 'Al Sulimaniyah', 'Anwar Hossain', 20000, 14, 'cash', 4],
   ['Golden Spoon Catering', 'الملعقة الذهبية للإعاشة', 'catering', 'Riyadh', 'Al Sahafa', 'Tarek Mansour', 60000, 30, 'credit', 5],

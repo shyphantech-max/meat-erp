@@ -1,0 +1,18 @@
+import { buildSeed } from '../src/data/seed'
+import { computeSettlement, customerOutstanding, totalWarehouseKg, vanStockByProduct, invoiceBalance } from '../src/store/derive'
+const db = buildSeed()
+const c = (k: string, n: number) => console.log(k.padEnd(22), n)
+c('suppliers', db.suppliers.length); c('customers', db.customers.length); c('products', db.products.length); c('warehouses', db.warehouses.length)
+c('drivers', db.drivers.length); c('vehicles', db.vehicles.length); c('purchase orders', db.purchaseOrders.length); c('grns', db.grns.length)
+c('shipments', db.shipments.length); c('invoices', db.invoices.length); c('sales orders', db.salesOrders.length); c('deliveries', db.deliveries.length)
+c('payments', db.payments.length); c('settlements', db.settlements.length); c('van loads', db.vanLoads.length); c('batches', db.batches.length)
+console.log('PO status', db.purchaseOrders.reduce((m: any, p) => ((m[p.status] = (m[p.status] ?? 0) + 1), m), {}))
+console.log('GRN status', db.grns.reduce((m: any, p) => ((m[p.status] = (m[p.status] ?? 0) + 1), m), {}))
+console.log('Delivery status', db.deliveries.reduce((m: any, p) => ((m[p.status] = (m[p.status] ?? 0) + 1), m), {}))
+console.log('Settlement', db.settlements.map((s) => `${s.settlementNo} ${s.date} ${s.driverId} ${s.status} sales=${s.totalSales} cash=${s.cashCollected} bank=${s.bankTransfers} old=${s.oldDuesCollected} var=${s.cashVariance} open=${s.openingKg} load=${s.loadedKg} del=${s.deliveredKg} ret=${s.returnedKg} close=${s.closingKg}`))
+console.log('warehouse kg', totalWarehouseKg(db))
+console.log('outstanding', db.customers.map((x) => `${x.name.slice(0, 18)} ${customerOutstanding(db, x.id)} / ${x.creditLimit}`))
+console.log('van', db.drivers.map((d) => `${d.name}: ${JSON.stringify(vanStockByProduct(db, d.id))}`))
+const neg = db.batches.filter((b) => b.qtyKg < 0); c('negative batches', neg.length)
+const badInv = db.invoices.filter((i) => i.paid > i.total + 0.01 || invoiceBalance(i) < 0); c('bad invoices', badInv.length)
+console.log('stock by product', db.products.map((p) => `${p.code} ${db.batches.filter((b) => b.productId === p.id).reduce((s, b) => s + b.qtyKg, 0).toFixed(0)} (reorder ${p.reorderLevelKg})`))
