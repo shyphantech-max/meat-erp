@@ -40,6 +40,13 @@ The Owner can add users, create custom roles and tick module permissions per rol
 On desktop everyone gets the web layout; on phones the same accounts get an app layout with a bottom tab
 bar and a centre "+" for quick actions. The site can be installed to the home screen (web app manifest).
 
+## Backend (Zoho Catalyst)
+
+The app runs fully in the browser by default. Set `VITE_DATA_MODE=remote` and `VITE_API_URL` to use a
+backend instead - same UI, data on Zoho Catalyst. The API contract, command list and Catalyst plan are in
+[docs/catalyst-backend.md](docs/catalyst-backend.md). Try it locally: `npm run dev:api` (reference API on
+:5241) and `npm run dev:remote` (app in remote mode on :5242).
+
 ## Deploy (Vercel)
 
 `vercel.json` rewrites every route to `index.html`, so refreshing a deep link works. Share previews use

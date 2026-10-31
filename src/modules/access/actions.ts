@@ -1,4 +1,5 @@
 /** Users & Access transactions (run through useAction so they commit atomically). */
+import { command } from '@/lib/commands'
 import type { AccessRole, AppUser, DB, ID, Result } from '@/types'
 import type { Ctx } from '@/store/logic'
 import { log, uid } from '@/store/logic'
@@ -16,7 +17,7 @@ export interface UserInput {
   active: boolean
   password?: string
 }
-export function saveUser(db: DB, ctx: Ctx, input: UserInput, currentUserId: ID): Result {
+function saveUser_(db: DB, ctx: Ctx, input: UserInput, currentUserId: ID): Result {
   const name = input.name.trim()
   const email = input.email.trim().toLowerCase()
   if (name.length < 3) return fail('Enter the full name')
@@ -47,7 +48,7 @@ export function saveUser(db: DB, ctx: Ctx, input: UserInput, currentUserId: ID):
   return { ok: true, id: user.id }
 }
 
-export function setUserActive(db: DB, ctx: Ctx, id: ID, active: boolean, currentUserId: ID): Result {
+function setUserActive_(db: DB, ctx: Ctx, id: ID, active: boolean, currentUserId: ID): Result {
   const u = db.users.find((x) => x.id === id)
   if (!u) return fail('User not found')
   if (!active && id === currentUserId) return fail('You cannot deactivate your own account')
@@ -57,7 +58,7 @@ export function setUserActive(db: DB, ctx: Ctx, id: ID, active: boolean, current
   return { ok: true, id }
 }
 
-export function setRoleModule(db: DB, ctx: Ctx, roleKey: string, module: string, on: boolean): Result {
+function setRoleModule_(db: DB, ctx: Ctx, roleKey: string, module: string, on: boolean): Result {
   const r = db.roles.find((x) => x.key === roleKey)
   if (!r) return fail('Role not found')
   if (r.key === 'owner') return fail('The Owner role always has full access')
@@ -70,7 +71,7 @@ export function setRoleModule(db: DB, ctx: Ctx, roleKey: string, module: string,
   return { ok: true, id: roleKey }
 }
 
-export function saveRole(db: DB, ctx: Ctx, input: { key?: string; label: string; description: string; modules: string[] }): Result {
+function saveRole_(db: DB, ctx: Ctx, input: { key?: string; label: string; description: string; modules: string[] }): Result {
   const label = input.label.trim()
   if (label.length < 3) return fail('Enter a role name')
   if (db.roles.some((r) => r.label.toLowerCase() === label.toLowerCase() && r.key !== input.key)) return fail('A role with this name already exists')
@@ -96,7 +97,7 @@ export function saveRole(db: DB, ctx: Ctx, input: { key?: string; label: string;
   return { ok: true, id: key }
 }
 
-export function deleteRole(db: DB, ctx: Ctx, key: string): Result {
+function deleteRole_(db: DB, ctx: Ctx, key: string): Result {
   const r = db.roles.find((x) => x.key === key)
   if (!r) return fail('Role not found')
   if (r.system) return fail('Built-in roles cannot be deleted')
@@ -106,3 +107,10 @@ export function deleteRole(db: DB, ctx: Ctx, key: string): Result {
   log(db, ctx, 'Role deleted', r.label)
   return { ok: true, id: key }
 }
+
+// ───────────────────────── command registry (recordable, shared with the Catalyst backend) ─────────────────────────
+export const saveUser = command('saveUser', saveUser_)
+export const setUserActive = command('setUserActive', setUserActive_)
+export const setRoleModule = command('setRoleModule', setRoleModule_)
+export const saveRole = command('saveRole', saveRole_)
+export const deleteRole = command('deleteRole', deleteRole_)

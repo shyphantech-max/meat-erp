@@ -5,6 +5,7 @@
  * transition idempotent: approving an approved GRN, completing a completed delivery or
  * re-posting the same payment returns an error instead of double-counting.
  */
+import { command, makeId } from '@/lib/commands'
 import type {
   Batch, DayKey, DB, Delivery, DeliveryLine, GRNLine, ID, Invoice, Payment, PaymentAllocation, PaymentMethod, POLine, PurchaseOrder,
   Result, SalesLine, Settlement, SettlementStatus, Shipment, ShipmentStatus, StockMoveType, VanMoveType, AppNotification, Customer,
@@ -25,8 +26,10 @@ const fail = (error: string, code?: string): Result<any> => ({ ok: false, error,
 const EPS = 0.001
 
 export function uid(db: DB, prefix: string) {
-  db.counters.id = (db.counters.id ?? 0) + 1
-  return `${prefix}_${db.counters.id.toString(36)}`
+  return makeId(prefix, () => {
+    db.counters.id = (db.counters.id ?? 0) + 1
+    return `${prefix}_${db.counters.id.toString(36)}`
+  })
 }
 export function nextNo(db: DB, key: string, prefix: string, year: string, pad = 5) {
   db.counters[key] = (db.counters[key] ?? 0) + 1
@@ -47,7 +50,7 @@ export function log(db: DB, ctx: Ctx, action: string, ref: string) {
 
 // ───────────────────────── masters ─────────────────────────
 type Collection = 'products' | 'suppliers' | 'customers' | 'drivers' | 'vehicles' | 'warehouses'
-export function upsertMaster<T extends { id: ID }>(db: DB, ctx: Ctx, coll: Collection, item: Omit<T, 'id'> & { id?: ID }, prefix: string): Result {
+function upsertMaster_<T extends { id: ID }>(db: DB, ctx: Ctx, coll: Collection, item: Omit<T, 'id'> & { id?: ID }, prefix: string): Result {
   const list = db[coll] as unknown as T[]
   if (item.id) {
     const i = list.findIndex((x) => x.id === item.id)
@@ -63,7 +66,7 @@ export function upsertMaster<T extends { id: ID }>(db: DB, ctx: Ctx, coll: Colle
 }
 
 /** keep driver ↔ vehicle assignment symmetric */
-export function assignVehicle(db: DB, ctx: Ctx, driverId: ID, vehicleId: ID | undefined): Result {
+function assignVehicle_(db: DB, ctx: Ctx, driverId: ID, vehicleId: ID | undefined): Result {
   const d = db.drivers.find((x) => x.id === driverId)
   if (!d) return fail('Driver not found')
   if (vehicleId) {
@@ -93,7 +96,7 @@ export interface POInput {
   notes?: string
   submit?: boolean
 }
-export function createPO(db: DB, ctx: Ctx, input: POInput, id?: ID): Result {
+function createPO_(db: DB, ctx: Ctx, input: POInput, id?: ID): Result {
   if (!db.suppliers.find((s) => s.id === input.supplierId)) return fail('Select a supplier')
   const lines = input.lines.filter((l) => l.productId && l.qtyKg > 0)
   if (!lines.length) return fail('Add at least one product line with quantity')
@@ -123,7 +126,7 @@ export function createPO(db: DB, ctx: Ctx, input: POInput, id?: ID): Result {
     notify(db, ctx, { audience: 'admin', kind: 'info', title: 'PO awaiting approval', body: `${po.poNo} · SAR ${po.totalSAR.toLocaleString('en')}`, link: '/purchases?tab=orders' })
   return { ok: true, id: po.id }
 }
-export function setPOStatus(db: DB, ctx: Ctx, id: ID, action: 'submit' | 'approve' | 'reject' | 'cancel', reason?: string): Result {
+function setPOStatus_(db: DB, ctx: Ctx, id: ID, action: 'submit' | 'approve' | 'reject' | 'cancel', reason?: string): Result {
   const po = db.purchaseOrders.find((p) => p.id === id)
   if (!po) return fail('PO not found')
   if (action === 'submit') {
@@ -147,7 +150,7 @@ export function setPOStatus(db: DB, ctx: Ctx, id: ID, action: 'submit' | 'approv
   log(db, ctx, `PO ${action}`, po.poNo)
   return { ok: true, id }
 }
-export function paySupplier(db: DB, ctx: Ctx, input: { poId: ID; amountSAR: number; method: 'bank' | 'cash' | 'lc'; date: DayKey; reference?: string }): Result {
+function paySupplier_(db: DB, ctx: Ctx, input: { poId: ID; amountSAR: number; method: 'bank' | 'cash' | 'lc'; date: DayKey; reference?: string }): Result {
   const po = db.purchaseOrders.find((p) => p.id === input.poId)
   if (!po) return fail('PO not found')
   if (!['approved', 'partially_received', 'received'].includes(po.status)) return fail('Only approved POs can be paid')
@@ -165,7 +168,7 @@ export function paySupplier(db: DB, ctx: Ctx, input: { poId: ID; amountSAR: numb
 }
 
 // ───────────────────────── imports ─────────────────────────
-export function createShipment(db: DB, ctx: Ctx, input: Omit<Shipment, 'id' | 'ref' | 'events' | 'status' | 'goodsValueSAR' | 'lines'> & { status?: ShipmentStatus }): Result {
+function createShipment_(db: DB, ctx: Ctx, input: Omit<Shipment, 'id' | 'ref' | 'events' | 'status' | 'goodsValueSAR' | 'lines'> & { status?: ShipmentStatus }): Result {
   const po = db.purchaseOrders.find((p) => p.id === input.poId)
   if (!po) return fail('Select a purchase order')
   if (po.kind !== 'import') return fail('Shipments can only be created for import POs')
@@ -187,7 +190,7 @@ export function createShipment(db: DB, ctx: Ctx, input: Omit<Shipment, 'id' | 'r
   log(db, ctx, 'Created import shipment', s.ref)
   return { ok: true, id: s.id }
 }
-export function advanceShipment(db: DB, ctx: Ctx, id: ID, status: ShipmentStatus, at: DayKey, note?: string): Result {
+function advanceShipment_(db: DB, ctx: Ctx, id: ID, status: ShipmentStatus, at: DayKey, note?: string): Result {
   const s = db.shipments.find((x) => x.id === id)
   if (!s) return fail('Shipment not found')
   const order: ShipmentStatus[] = ['booked', 'in_transit', 'arrived_port', 'customs_clearance', 'cleared', 'delivered']
@@ -214,7 +217,7 @@ export interface GRNInput {
   vehicleTempC?: number
   lines: Omit<GRNLine, 'acceptedKg' | 'rejectedKg' | 'unitCostSAR'>[]
 }
-export function createGRN(db: DB, ctx: Ctx, input: GRNInput): Result {
+function createGRN_(db: DB, ctx: Ctx, input: GRNInput): Result {
   const po = db.purchaseOrders.find((p) => p.id === input.poId)
   if (!po) return fail('Select a purchase reference')
   if (!['approved', 'partially_received'].includes(po.status)) return fail('Goods can only be received against an approved PO')
@@ -255,7 +258,7 @@ export function createGRN(db: DB, ctx: Ctx, input: GRNInput): Result {
   log(db, ctx, 'Goods received', db.grns[db.grns.length - 1].grnNo)
   return { ok: true, id }
 }
-export function qcGRN(db: DB, ctx: Ctx, id: ID, lines: { productId: ID; acceptedKg: number; rejectReason?: string }[], notes: string): Result {
+function qcGRN_(db: DB, ctx: Ctx, id: ID, lines: { productId: ID; acceptedKg: number; rejectReason?: string }[], notes: string): Result {
   const g = db.grns.find((x) => x.id === id)
   if (!g) return fail('GRN not found')
   if (g.status !== 'received') return fail(`Quality check already done (${g.status.replace('_', ' ')})`)
@@ -278,7 +281,7 @@ export function qcGRN(db: DB, ctx: Ctx, id: ID, lines: { productId: ID; accepted
   notify(db, ctx, { audience: 'admin', kind: 'info', title: 'GRN ready for approval', body: `${g.grnNo} passed quality check`, link: '/grn' })
   return { ok: true, id }
 }
-export function approveGRN(db: DB, ctx: Ctx, id: ID): Result {
+function approveGRN_(db: DB, ctx: Ctx, id: ID): Result {
   const g = db.grns.find((x) => x.id === id)
   if (!g) return fail('GRN not found')
   if (g.status === 'approved') return fail('GRN is already approved - stock was posted once', 'ALREADY')
@@ -307,7 +310,7 @@ export function approveGRN(db: DB, ctx: Ctx, id: ID): Result {
   log(db, ctx, 'GRN approved · inventory updated', g.grnNo)
   return { ok: true, id }
 }
-export function rejectGRN(db: DB, ctx: Ctx, id: ID, reason: string): Result {
+function rejectGRN_(db: DB, ctx: Ctx, id: ID, reason: string): Result {
   const g = db.grns.find((x) => x.id === id)
   if (!g) return fail('GRN not found')
   if (g.status === 'approved' || g.status === 'rejected') return fail(`GRN is already ${g.status}`)
@@ -361,7 +364,7 @@ function checkWarehouse(db: DB, lines: { productId: ID; qtyKg: number }[], wareh
   return null
 }
 
-export function transferStock(db: DB, ctx: Ctx, input: { fromWh: ID; toWh: ID; productId: ID; qtyKg: number; date: DayKey; note?: string }): Result {
+function transferStock_(db: DB, ctx: Ctx, input: { fromWh: ID; toWh: ID; productId: ID; qtyKg: number; date: DayKey; note?: string }): Result {
   if (input.fromWh === input.toWh) return fail('Source and destination warehouses must differ')
   if (input.qtyKg <= 0) return fail('Enter a quantity')
   const err = checkWarehouse(db, [input], input.fromWh, input.date)
@@ -377,7 +380,7 @@ export function transferStock(db: DB, ctx: Ctx, input: { fromWh: ID; toWh: ID; p
   log(db, ctx, 'Warehouse transfer', ref)
   return { ok: true, id: ref }
 }
-export function adjustStock(db: DB, ctx: Ctx, input: { batchId: ID; qtyKg: number; type: 'damage' | 'expired'; reason: string; date: DayKey }): Result {
+function adjustStock_(db: DB, ctx: Ctx, input: { batchId: ID; qtyKg: number; type: 'damage' | 'expired'; reason: string; date: DayKey }): Result {
   const b = db.batches.find((x) => x.id === input.batchId)
   if (!b) return fail('Batch not found')
   if (input.qtyKg <= 0) return fail('Enter the quantity to write off')
@@ -404,7 +407,7 @@ function checkVan(db: DB, driverId: ID, lines: { productId: ID; qtyKg: number }[
   }
   return null
 }
-export function loadVan(db: DB, ctx: Ctx, input: { driverId: ID; vehicleId: ID; warehouseId: ID; date: DayKey; lines: { productId: ID; qtyKg: number }[] }): Result {
+function loadVan_(db: DB, ctx: Ctx, input: { driverId: ID; vehicleId: ID; warehouseId: ID; date: DayKey; lines: { productId: ID; qtyKg: number }[] }): Result {
   const d = db.drivers.find((x) => x.id === input.driverId)
   const v = db.vehicles.find((x) => x.id === input.vehicleId)
   if (!d) return fail('Select a driver')
@@ -432,7 +435,7 @@ export function loadVan(db: DB, ctx: Ctx, input: { driverId: ID; vehicleId: ID; 
   notify(db, ctx, { audience: 'driver', driverId: d.id, kind: 'info', title: 'Van loaded', body: `${slipNo}: ${round2(total).toLocaleString('en')} kg loaded on ${v.plateNo}`, link: '/driver' })
   return { ok: true, id }
 }
-export function returnToWarehouse(db: DB, ctx: Ctx, input: { driverId: ID; warehouseId: ID; date: DayKey; lines: { productId: ID; qtyKg: number }[] }): Result {
+function returnToWarehouse_(db: DB, ctx: Ctx, input: { driverId: ID; warehouseId: ID; date: DayKey; lines: { productId: ID; qtyKg: number }[] }): Result {
   const d = db.drivers.find((x) => x.id === input.driverId)
   if (!d) return fail('Driver not found')
   const lines = input.lines.filter((l) => l.qtyKg > 0)
@@ -447,7 +450,7 @@ export function returnToWarehouse(db: DB, ctx: Ctx, input: { driverId: ID; wareh
   log(db, ctx, 'Van stock returned to warehouse', `${ref} · ${d.name}`)
   return { ok: true, id: ref }
 }
-export function recordVanLoss(db: DB, ctx: Ctx, input: { driverId: ID; productId: ID; qtyKg: number; reason: string; date: DayKey }): Result {
+function recordVanLoss_(db: DB, ctx: Ctx, input: { driverId: ID; productId: ID; qtyKg: number; reason: string; date: DayKey }): Result {
   const d = db.drivers.find((x) => x.id === input.driverId)
   if (!d) return fail('Driver not found')
   if (input.qtyKg <= 0) return fail('Enter loss quantity')
@@ -490,7 +493,7 @@ function makeInvoice(db: DB, ctx: Ctx, c: Customer, data: Pick<Invoice, 'date' |
   return inv
 }
 export interface SOInput { customerId: ID; date: DayKey; deliveryDate: DayKey; lines: SalesLine[]; paymentType: 'cash' | 'credit'; notes?: string; driverId?: ID }
-export function createSalesOrder(db: DB, ctx: Ctx, input: SOInput): Result {
+function createSalesOrder_(db: DB, ctx: Ctx, input: SOInput): Result {
   const c = db.customers.find((x) => x.id === input.customerId)
   if (!c) return fail('Select a customer')
   const lines = input.lines.filter((l) => l.productId && l.qtyKg > 0)
@@ -506,7 +509,7 @@ export function createSalesOrder(db: DB, ctx: Ctx, input: SOInput): Result {
   }
   return { ok: true, id }
 }
-export function assignOrders(db: DB, ctx: Ctx, soIds: ID[], driverId: ID, date: DayKey): Result {
+function assignOrders_(db: DB, ctx: Ctx, soIds: ID[], driverId: ID, date: DayKey): Result {
   const d = db.drivers.find((x) => x.id === driverId)
   if (!d) return fail('Select a driver')
   if (!d.vehicleId) return fail(`${d.name} has no vehicle assigned`)
@@ -538,7 +541,7 @@ export function assignOrders(db: DB, ctx: Ctx, soIds: ID[], driverId: ID, date: 
   notify(db, ctx, { audience: 'driver', driverId, kind: 'info', title: 'New deliveries assigned', body: `${soIds.length} stop(s) added to your route`, link: '/driver' })
   return { ok: true, id: driverId }
 }
-export function cancelSalesOrder(db: DB, ctx: Ctx, id: ID, reason: string): Result {
+function cancelSalesOrder_(db: DB, ctx: Ctx, id: ID, reason: string): Result {
   const so = db.salesOrders.find((s) => s.id === id)
   if (!so) return fail('Order not found')
   if (so.status !== 'open') return fail('Only open (unassigned) orders can be cancelled')
@@ -548,7 +551,7 @@ export function cancelSalesOrder(db: DB, ctx: Ctx, id: ID, reason: string): Resu
   log(db, ctx, 'Sales order cancelled', so.soNo)
   return { ok: true, id }
 }
-export function reorderRoute(db: DB, ctx: Ctx, deliveryId: ID, dir: -1 | 1): Result {
+function reorderRoute_(db: DB, ctx: Ctx, deliveryId: ID, dir: -1 | 1): Result {
   const dl = db.deliveries.find((x) => x.id === deliveryId)
   if (!dl) return fail('Delivery not found')
   const route = db.deliveries.filter((x) => x.driverId === dl.driverId && x.date === dl.date).sort((a, b) => a.routeSeq - b.routeSeq)
@@ -560,14 +563,14 @@ export function reorderRoute(db: DB, ctx: Ctx, deliveryId: ID, dir: -1 | 1): Res
   dl.routeSeq = t
   return { ok: true, id: deliveryId }
 }
-export function setOutForDelivery(db: DB, ctx: Ctx, deliveryId: ID): Result {
+function setOutForDelivery_(db: DB, ctx: Ctx, deliveryId: ID): Result {
   const dl = db.deliveries.find((x) => x.id === deliveryId)
   if (!dl) return fail('Delivery not found')
   if (dl.status !== 'pending') return fail('Delivery is not pending')
   dl.status = 'out_for_delivery'
   return { ok: true, id: deliveryId }
 }
-export function completeDelivery(
+function completeDelivery_(
   db: DB, ctx: Ctx,
   input: { deliveryId: ID; lines: { productId: ID; deliveredKg: number }[]; failed?: boolean; failReason?: string; notes?: string; allowOverLimit?: boolean },
 ): Result<{ id?: ID; invoiceId?: ID }> {
@@ -611,7 +614,7 @@ export function completeDelivery(
   log(db, ctx, `Delivered ${partial ? '(partial)' : ''}`, `${dl.deliveryNo} → ${inv.invNo}`)
   return { ok: true, id: dl.id, invoiceId: inv.id }
 }
-export function vanSale(db: DB, ctx: Ctx, input: { driverId: ID; customerId: ID; date: DayKey; lines: SalesLine[]; paymentType: 'cash' | 'credit'; allowOverLimit?: boolean }): Result {
+function vanSale_(db: DB, ctx: Ctx, input: { driverId: ID; customerId: ID; date: DayKey; lines: SalesLine[]; paymentType: 'cash' | 'credit'; allowOverLimit?: boolean }): Result {
   const d = db.drivers.find((x) => x.id === input.driverId)
   const c = db.customers.find((x) => x.id === input.customerId)
   if (!d) return fail('Driver not found')
@@ -629,7 +632,7 @@ export function vanSale(db: DB, ctx: Ctx, input: { driverId: ID; customerId: ID;
   log(db, ctx, 'Van sale', `${inv.invNo} · ${c.name}`)
   return { ok: true, id: inv.id }
 }
-export function directInvoice(db: DB, ctx: Ctx, input: { customerId: ID; warehouseId: ID; date: DayKey; lines: SalesLine[]; paymentType: 'cash' | 'credit'; notes?: string; allowOverLimit?: boolean }): Result {
+function directInvoice_(db: DB, ctx: Ctx, input: { customerId: ID; warehouseId: ID; date: DayKey; lines: SalesLine[]; paymentType: 'cash' | 'credit'; notes?: string; allowOverLimit?: boolean }): Result {
   const c = db.customers.find((x) => x.id === input.customerId)
   if (!c) return fail('Select a customer')
   const lines = input.lines.filter((l) => l.productId && l.qtyKg > 0)
@@ -644,7 +647,7 @@ export function directInvoice(db: DB, ctx: Ctx, input: { customerId: ID; warehou
   log(db, ctx, 'Direct invoice', `${inv.invNo} · ${c.name}`)
   return { ok: true, id: inv.id }
 }
-export function voidInvoice(db: DB, ctx: Ctx, id: ID, reason: string): Result {
+function voidInvoice_(db: DB, ctx: Ctx, id: ID, reason: string): Result {
   const inv = db.invoices.find((i) => i.id === id)
   if (!inv) return fail('Invoice not found')
   if (inv.status === 'void') return fail('Invoice is already void')
@@ -657,7 +660,7 @@ export function voidInvoice(db: DB, ctx: Ctx, id: ID, reason: string): Result {
   log(db, ctx, 'Invoice voided', inv.invNo)
   return { ok: true, id }
 }
-export function salesReturn(
+function salesReturn_(
   db: DB, ctx: Ctx,
   input: { invoiceId: ID; date: DayKey; lines: { productId: ID; qtyKg: number }[]; reason: string; destination: 'van' | 'warehouse'; warehouseId?: ID; condition: 'resaleable' | 'damaged'; driverId?: ID },
 ): Result {
@@ -723,7 +726,7 @@ export interface PaymentInput {
   /** counter sales: same amount twice in a row is normal (idempotency key still blocks double posting) */
   allowRepeat?: boolean
 }
-export function recordPayment(db: DB, ctx: Ctx, input: PaymentInput): Result {
+function recordPayment_(db: DB, ctx: Ctx, input: PaymentInput): Result {
   const c = db.customers.find((x) => x.id === input.customerId)
   if (!c) return fail('Select a customer')
   const amount = round2(input.amount)
@@ -786,7 +789,7 @@ export function recordPayment(db: DB, ctx: Ctx, input: PaymentInput): Result {
   log(db, ctx, `Payment received (${input.method})`, `${receiptNo} · ${c.name}`)
   return { ok: true, id }
 }
-export function verifyPayment(db: DB, ctx: Ctx, id: ID, decision: 'verified' | 'rejected', note?: string): Result {
+function verifyPayment_(db: DB, ctx: Ctx, id: ID, decision: 'verified' | 'rejected', note?: string): Result {
   const p = db.payments.find((x) => x.id === id)
   if (!p) return fail('Payment not found')
   if (p.verification !== 'pending') return fail(`Payment is already ${p.verification}`)
@@ -808,7 +811,7 @@ export function verifyPayment(db: DB, ctx: Ctx, id: ID, decision: 'verified' | '
 }
 
 // ───────────────────────── daily settlement ─────────────────────────
-export function submitSettlement(db: DB, ctx: Ctx, input: { driverId: ID; date: DayKey; cashHandedOver: number; physical?: Record<ID, number>; notes?: string }): Result {
+function submitSettlement_(db: DB, ctx: Ctx, input: { driverId: ID; date: DayKey; cashHandedOver: number; physical?: Record<ID, number>; notes?: string }): Result {
   const d = db.drivers.find((x) => x.id === input.driverId)
   if (!d) return fail('Driver not found')
   const existing = db.settlements.find((s) => s.driverId === d.id && s.date === input.date && s.status !== 'rejected')
@@ -854,7 +857,7 @@ export function submitSettlement(db: DB, ctx: Ctx, input: { driverId: ID; date: 
   })
   return { ok: true, id }
 }
-export function advanceSettlement(db: DB, ctx: Ctx, id: ID, to: SettlementStatus, opts: { remarks?: string; cashVerified?: boolean; stockVerified?: boolean } = {}): Result {
+function advanceSettlement_(db: DB, ctx: Ctx, id: ID, to: SettlementStatus, opts: { remarks?: string; cashVerified?: boolean; stockVerified?: boolean } = {}): Result {
   const s = db.settlements.find((x) => x.id === id)
   if (!s) return fail('Settlement not found')
   const allowed: Record<SettlementStatus, SettlementStatus[]> = {
@@ -892,3 +895,35 @@ export function advanceSettlement(db: DB, ctx: Ctx, id: ID, to: SettlementStatus
 
 export const _internal = { pick, putBack, vmove }
 export type { Delivery }
+
+// ───────────────────────── command registry (recordable, shared with the Catalyst backend) ─────────────────────────
+export const upsertMaster = command('upsertMaster', upsertMaster_)
+export const assignVehicle = command('assignVehicle', assignVehicle_)
+export const createPO = command('createPO', createPO_)
+export const setPOStatus = command('setPOStatus', setPOStatus_)
+export const paySupplier = command('paySupplier', paySupplier_)
+export const createShipment = command('createShipment', createShipment_)
+export const advanceShipment = command('advanceShipment', advanceShipment_)
+export const createGRN = command('createGRN', createGRN_)
+export const qcGRN = command('qcGRN', qcGRN_)
+export const approveGRN = command('approveGRN', approveGRN_)
+export const rejectGRN = command('rejectGRN', rejectGRN_)
+export const transferStock = command('transferStock', transferStock_)
+export const adjustStock = command('adjustStock', adjustStock_)
+export const loadVan = command('loadVan', loadVan_)
+export const returnToWarehouse = command('returnToWarehouse', returnToWarehouse_)
+export const recordVanLoss = command('recordVanLoss', recordVanLoss_)
+export const createSalesOrder = command('createSalesOrder', createSalesOrder_)
+export const assignOrders = command('assignOrders', assignOrders_)
+export const cancelSalesOrder = command('cancelSalesOrder', cancelSalesOrder_)
+export const reorderRoute = command('reorderRoute', reorderRoute_)
+export const setOutForDelivery = command('setOutForDelivery', setOutForDelivery_)
+export const completeDelivery = command('completeDelivery', completeDelivery_)
+export const vanSale = command('vanSale', vanSale_)
+export const directInvoice = command('directInvoice', directInvoice_)
+export const voidInvoice = command('voidInvoice', voidInvoice_)
+export const salesReturn = command('salesReturn', salesReturn_)
+export const recordPayment = command('recordPayment', recordPayment_)
+export const verifyPayment = command('verifyPayment', verifyPayment_)
+export const submitSettlement = command('submitSettlement', submitSettlement_)
+export const advanceSettlement = command('advanceSettlement', advanceSettlement_)

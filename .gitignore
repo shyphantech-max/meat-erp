@@ -2,3 +2,10 @@ node_modules
 dist
 *.tsbuildinfo
 .DS_Store
+.env
+.env.local
+backend/functions/*/node_modules
+backend/.build
+backend/.secrets
+backend/functions/api/catalyst-config.json
+backend/functions/api/index.js

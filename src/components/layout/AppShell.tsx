@@ -9,6 +9,8 @@ import { useSession } from '@/store/session'
 import { useT } from '@/i18n'
 import { NAV } from '@/data/nav'
 import { moduleForPath } from '@/lib/rbac'
+import { isRemote } from '@/data/remote/config'
+import { useSync } from '@/data/remote/sync'
 import { cn } from '@/lib/utils'
 import { Header } from './Header'
 import { QuickCreateFab } from './QuickCreate'
@@ -112,6 +114,7 @@ function AccessDenied() {
 export function AppShell() {
   const { role, setRole, authed, signOut } = useUI()
   const session = useSession()
+  const syncToken = useSync((s) => s.token)
   const loc = useLocation()
   const [more, setMore] = useState(false)
   useEffect(() => { window.scrollTo(0, 0) }, [loc.pathname])
@@ -123,7 +126,8 @@ export function AppShell() {
   useEffect(() => {
     if (authed && !session.valid) signOut()
   }, [authed, session.valid, signOut])
-  if (!authed || !session.valid) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
+  const remoteSessionLost = isRemote() && !syncToken
+  if (!authed || !session.valid || remoteSessionLost) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   const allowed = session.can(moduleForPath(loc.pathname))
   // roles without the dashboard (e.g. counter cashier) start on their first module
   if (!allowed && loc.pathname === '/' && session.modules.length) {

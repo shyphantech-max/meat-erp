@@ -1,0 +1,9 @@
+{
+	"name": "api",
+	"version": "1.0.0",
+	"main": "index.js",
+	"author": "vikas@shyphan.com",
+	"dependencies": {
+		"zcatalyst-sdk-node": "latest"
+	}
+}

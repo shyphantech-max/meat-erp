@@ -10,6 +10,9 @@ import { useT, useName } from '@/i18n'
 import { useUI } from '@/store/useUI'
 import { useSession } from '@/store/session'
 import { moduleForPath } from '@/lib/rbac'
+import { isRemote } from '@/data/remote/config'
+import { remoteLogout } from '@/data/remote/sync'
+import { SyncBadge } from './SyncBadge'
 import { NAV } from '@/data/nav'
 import { BrandLogo } from '@/components/common'
 import { useStore } from '@/store/useStore'
@@ -148,6 +151,7 @@ export function Header() {
   const title = NAV.flatMap((g) => g.items).find((i) => i.key === key)?.label ?? 'Dashboard'
   const leave = (toastMsg?: string) => {
     signOut()
+    if (isRemote()) remoteLogout()
     if (toastMsg) toast.success(t(toastMsg))
     nav('/login', { replace: true })
   }
@@ -191,6 +195,7 @@ export function Header() {
             <CalendarDays className="size-3.5" />
             {t('Business day')}: <span className="font-semibold text-foreground">{fmtDate(todayKey())}</span>
           </div>
+          <SyncBadge />
           <LanguageToggle />
           <NotificationsBell audience="admin" />
           {profile}
@@ -206,6 +211,7 @@ export function Header() {
         <Button variant="ghost" size="icon" onClick={() => setSearchOpen((o) => !o)} aria-label={t('Search')}>
           <Search className="size-[18px]" />
         </Button>
+        <SyncBadge compact />
         <NotificationsBell audience="admin" />
         {profile}
       </div>

@@ -23,6 +23,8 @@ import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types'
 import { BrandVideo } from './BrandVideo'
+import { isRemote } from '@/data/remote/config'
+import { remoteLogin } from '@/data/remote/sync'
 
 export default function Login() {
   const t = useT()
@@ -68,6 +70,16 @@ export default function Login() {
     setErrors(errs)
     if (Object.keys(errs).length) return
     setBusy(true)
+    if (isRemote()) {
+      // Catalyst backend: the server checks the password and returns the session + data
+      remoteLogin(email.trim(), password)
+        .then((u) => finish(u))
+        .catch((e: Error) => {
+          setBusy(false)
+          setErrors({ form: e.message || 'Incorrect email or password.' })
+        })
+      return
+    }
     setTimeout(() => {
       const u = match
       const role = roleOf(u)
@@ -82,7 +94,15 @@ export default function Login() {
         return
       }
       useStore.setState((st) => ({ db: produce(st.db, (d) => { const x = d.users.find((y) => y.id === u.id); if (x) x.lastLoginAt = new Date().toISOString() }) }))
-      if (role.kind === 'driver') {
+      finish(u)
+    }, 550)
+  }
+
+  /** route the signed-in user: drivers to the driver app, staff to the console */
+  const finish = (u: AppUser) => {
+    const role = useStore.getState().db.roles.find((r) => r.key === u.roleKey)
+    const drivers = useStore.getState().db.drivers
+    if (role?.kind === 'driver') {
         const d = drivers.find((x) => x.id === u.driverId)
         if (!d) {
           setBusy(false)
@@ -95,11 +115,10 @@ export default function Login() {
         toast.success(t('Welcome back, {name}', { name: u.name.split(' ')[0] }))
         nav('/driver', { replace: true })
         return
-      }
-      signIn(u.id)
-      toast.success(t('Welcome back, {name}', { name: u.name.split(' ')[0] }))
-      nav(from, { replace: true })
-    }, 550)
+    }
+    signIn(u.id)
+    toast.success(t('Welcome back, {name}', { name: u.name.split(' ')[0] }))
+    nav(from, { replace: true })
   }
 
   const features = [
@@ -183,7 +202,7 @@ export default function Login() {
             <h1 className="text-[26px] font-bold tracking-tight text-brand-ink">{t('Welcome back')}</h1>
             <p className="mt-1 text-[13.5px] text-muted-foreground">{t('Sign in to the {brand} console.', { brand: BRAND.full })}</p>
 
-            <div className="mt-6">
+            {!isRemote() && <div className="mt-6">
               <div className="mb-1.5 text-[12.5px] font-medium">{t('Sign in as')}</div>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -208,7 +227,7 @@ export default function Login() {
                   {driverUsers.map(userItem)}
                 </DropdownMenuContent>
               </DropdownMenu>
-            </div>
+            </div>}
 
             {errors.form && <div className="mt-4 rounded-lg border border-danger/25 bg-danger-soft px-3 py-2.5 text-[13px] text-danger">{t(errors.form)}</div>}
 

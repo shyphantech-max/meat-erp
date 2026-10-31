@@ -490,5 +490,14 @@ const ar: Record<string, string> = {
   'e.g. Sales Executive': 'مثال: مندوب مبيعات',
   'Select driver': 'اختر السائق',
   'Select role': 'اختر الدور',
+  'Synced': 'متزامن',
+  'Syncing…': 'جارٍ المزامنة…',
+  'Offline': 'غير متصل',
+  'Sync problem': 'مشكلة في المزامنة',
+  'Cloud sync': 'المزامنة السحابية',
+  'Pending changes': 'تغييرات معلقة',
+  'Last sync': 'آخر مزامنة',
+  'Retry': 'إعادة المحاولة',
+  'Reload data': 'إعادة تحميل البيانات',
 }
 export default ar

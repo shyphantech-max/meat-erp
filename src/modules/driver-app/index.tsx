@@ -18,6 +18,9 @@ import { useT, useName } from '@/i18n'
 import { cn } from '@/lib/utils'
 import { fmtDate, initials, todayKey } from '@/lib/format'
 import { isSignedIn, signOut, useDriverDay } from './useDriverDay'
+import { isRemote } from '@/data/remote/config'
+import { remoteLogout, useSync } from '@/data/remote/sync'
+import { SyncBadge } from '@/components/layout/SyncBadge'
 
 import Home from './screens/Home'
 import RouteList from './screens/RouteList'
@@ -89,6 +92,7 @@ function useSignOutDriver() {
   const { driverId } = useDriverDay()
   return () => {
     signOut(driverId)
+    if (isRemote()) remoteLogout()
     toast.success(t('Signed out'))
     nav('/login', { replace: true })
   }
@@ -173,6 +177,7 @@ function DesktopHeader() {
           <CalendarDays className="size-3.5" />
           {t('Business day')}: <span className="font-semibold text-foreground">{fmtDate(todayKey())}</span>
         </div>
+        <SyncBadge />
         <LanguageToggle />
         <NotificationsBell audience="driver" driverId={driverId} />
         <DriverAccountMenu />
@@ -193,6 +198,7 @@ function MobileTopBar() {
           <div className="truncate text-[15px] font-semibold">{name(driver)}</div>
           <div className="truncate text-[11.5px] text-sidebar-muted">{vehicle ? `${vehicle.plateNo} · ${vehicle.type}` : '-'}</div>
         </div>
+        <SyncBadge compact />
         <NotificationsBell audience="driver" driverId={driverId} dark />
         <LanguageToggle dark />
         <DriverAccountMenu dark />
@@ -261,6 +267,7 @@ export default function DriverApp() {
   const driver = useStore((s) => s.db.drivers.find((d) => d.id === driverId))
   const loc = useLocation()
   const nav = useNavigate()
+  const syncToken = useSync((s) => s.token)
   useEffect(() => {
     if (role !== 'driver') setRole('driver')
   }, [role, setRole])
@@ -269,7 +276,7 @@ export default function DriverApp() {
   }, [loc.pathname])
 
   // drivers sign in through the shared login page with their PIN
-  if (!driver || !isSignedIn(driverId)) return <Navigate to="/login" replace state={{ from: '/driver', mode: 'driver', driverId }} />
+  if (!driver || !isSignedIn(driverId) || (isRemote() && !syncToken)) return <Navigate to="/login" replace state={{ from: '/driver', mode: 'driver', driverId }} />
   return (
     <Shell>
       <ErrorBoundary>

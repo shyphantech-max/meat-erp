@@ -1,0 +1,30 @@
+{
+  "defaults": {
+    "project": 1,
+    "env": 1
+  },
+  "actives": {
+    "project": 1,
+    "env": 1
+  },
+  "projects": [
+    {
+      "idx": 1,
+      "id": "64503000000104001",
+      "name": "Zad-ERP",
+      "domain": {
+        "id": "50047327258",
+        "name": "zad-erp-60086771438.development"
+      },
+      "timezone": "Asia/Riyadh",
+      "env": [
+        {
+          "idx": 1,
+          "id": "60086771438",
+          "name": "Development",
+          "type": 3
+        }
+      ]
+    }
+  ]
+}

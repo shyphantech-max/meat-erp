@@ -1,10 +1,11 @@
 /** Validated settings update, run through useStore.run like every other transaction. */
+import { command } from '@/lib/commands'
 import type { DB, Result, Settings } from '@/types'
 import { log, type Ctx } from '@/store/logic'
 
 export type SettingsPatch = Partial<Omit<Settings, 'goLiveDate' | 'seededAt'>>
 
-export function updateSettings(db: DB, ctx: Ctx, patch: SettingsPatch): Result {
+function updateSettings_(db: DB, ctx: Ctx, patch: SettingsPatch): Result {
   const next = { ...db.settings, ...patch }
   if (!next.companyName.trim()) return { ok: false, error: 'Company name is required' }
   if (next.vatNo && !/^3\d{13}3$/.test(next.vatNo.trim())) return { ok: false, error: 'VAT number must be 15 digits, starting and ending with 3' }
@@ -20,3 +21,6 @@ export function updateSettings(db: DB, ctx: Ctx, patch: SettingsPatch): Result {
   log(db, ctx, 'Updated settings', changed.join(', '))
   return { ok: true }
 }
+
+// ───────────────────────── command registry (recordable, shared with the Catalyst backend) ─────────────────────────
+export const updateSettings = command('updateSettings', updateSettings_)
