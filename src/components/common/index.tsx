@@ -2,6 +2,7 @@
  * Shared building blocks used by every module page. Import from '@/components/common'.
  */
 import { Component, useMemo, useRef, useState, type ErrorInfo, type ReactNode } from 'react'
+import { BRAND } from '@/lib/brand'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { AlertTriangle, ArrowUpRight, Check, Inbox, Plus, Printer, Trash2, type LucideIcon } from 'lucide-react'
@@ -24,6 +25,17 @@ import { printElement } from '@/lib/print'
 
 export { ConfirmProvider, useConfirm } from './ConfirmDialog'
 
+/** company logo (rooster & sheep in the green ring); `tile` puts it on a white rounded badge for dark backgrounds */
+export function BrandLogo({ size = 40, tile, className }: { size?: number; tile?: boolean; className?: string }) {
+  const img = <img src="/brand/logo.png" alt={BRAND.full} width={size} height={size} className={cn('shrink-0 object-contain', !tile && className)} style={{ width: size, height: size }} draggable={false} />
+  if (!tile) return img
+  return (
+    <span className={cn('flex shrink-0 items-center justify-center rounded-xl bg-white shadow-[0_1px_0_rgba(0,0,0,0.08)]', className)} style={{ width: size + 8, height: size + 8 }}>
+      {img}
+    </span>
+  )
+}
+
 // ───────────── transactions with toasts ─────────────
 /**
  * const act = useAction()
@@ -34,9 +46,10 @@ export function useAction() {
   const run = useStore((s) => s.run)
   return <R extends Result<any>>(fn: (db: DB, ctx: Ctx) => R, success?: string | ((r: R) => string), opts: { silentError?: boolean } = {}): R => {
     const r = run(fn)
-    if (r.ok) {
+    const x = r as unknown as { ok: boolean; error?: string }
+    if (x.ok) {
       if (success) toast.success(typeof success === 'function' ? success(r) : tr(success))
-    } else if (!opts.silentError) toast.error(tr(r.error))
+    } else if (!opts.silentError) toast.error(tr(x.error ?? 'Something went wrong'))
     return r
   }
 }
@@ -89,7 +102,7 @@ export function Panel({ title, description, actions, children, className, bodyCl
 export type Tone = 'brand' | 'navy' | 'success' | 'warning' | 'danger' | 'info' | 'neutral'
 const toneBox: Record<Tone, string> = {
   brand: 'bg-brand-soft text-brand',
-  navy: 'bg-[#e8edf4] text-navy',
+  navy: 'bg-maroon-soft text-maroon',
   success: 'bg-success-soft text-success',
   warning: 'bg-warning-soft text-warning',
   danger: 'bg-danger-soft text-danger',
@@ -145,7 +158,7 @@ const STATUS_TONE: Record<string, Tone> = {
 }
 const badgeTone: Record<Tone, string> = {
   brand: 'border-brand/20 bg-brand-soft text-brand',
-  navy: 'border-navy/15 bg-[#e8edf4] text-navy',
+  navy: 'border-navy/15 bg-maroon-soft text-maroon',
   success: 'border-success/20 bg-success-soft text-success',
   warning: 'border-warning/25 bg-warning-soft text-warning',
   danger: 'border-danger/20 bg-danger-soft text-danger',
@@ -370,7 +383,7 @@ export function LineItemsEditor({
             </div>
             <NumInput value={l.qtyKg} onChange={(v) => set(i, { qtyKg: v })} placeholder="0" className={cn(over && 'border-danger')} aria-label="KG" />
             <div className="flex h-9 items-center rounded-md bg-muted px-2.5 text-[13px] text-muted-foreground tabular">
-              {p ? `${fmtNum(l.qtyKg / p.cartonKg, 1)} × ${p.cartonKg}` : '—'}
+              {p ? `${fmtNum(l.qtyKg / p.cartonKg, 1)} × ${p.cartonKg}` : '-'}
             </div>
             {showPrice ? <NumInput value={l.price} onChange={(v) => set(i, { price: v })} aria-label="Price" /> : <span className="hidden md:block" />}
             <div className="flex h-9 items-center justify-end text-[13px] font-medium tabular">{showPrice ? fmtSAR(round2(l.qtyKg * l.price)) : ''}</div>
@@ -414,7 +427,7 @@ export function PrintDialog({ open, onOpenChange, title, children, wide }: { ope
           <DialogTitle>{t(title)}</DialogTitle>
         </DialogHeader>
         <div className="max-h-[70vh] overflow-auto rounded-lg">
-          <div ref={ref} className="mx-auto bg-white p-8 text-[12.5px] text-[#14202e] shadow-sm" style={{ maxWidth: wide ? 1000 : 794 }}>
+          <div ref={ref} className="mx-auto bg-white p-8 text-[12.5px] text-[#172119] shadow-sm" style={{ maxWidth: wide ? 1000 : 794 }}>
             {children}
           </div>
         </div>
@@ -433,10 +446,10 @@ export function DocHeader({ title, number, date, extra }: { title: string; numbe
   const s = useStore((x) => x.db.settings)
   const t = useT()
   return (
-    <div className="mb-5 flex items-start justify-between gap-4 border-b-2 border-[#087f5b] pb-4">
+    <div className="mb-5 flex items-start justify-between gap-4 border-b-2 border-[#047a3f] pb-4">
       <div>
         <div className="flex items-center gap-2">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-[#087f5b] text-sm font-bold text-white">MF</div>
+          <img src="/brand/logo.png" alt="" className="size-12 object-contain" />
           <div>
             <div className="text-[15px] font-bold">{s.companyName}</div>
             <div className="text-[12px]" dir="rtl">{s.companyNameAr}</div>
@@ -449,7 +462,7 @@ export function DocHeader({ title, number, date, extra }: { title: string; numbe
         </div>
       </div>
       <div className="text-end">
-        <div className="text-[18px] font-bold tracking-tight text-[#14283f] uppercase">{t(title)}</div>
+        <div className="text-[18px] font-bold tracking-tight text-[#13261b] uppercase">{t(title)}</div>
         {number && <div className="mt-1 text-[13px] font-semibold">{number}</div>}
         {date && <div className="text-[12px] text-[#5f6b7a]">{date}</div>}
         {extra}
@@ -461,7 +474,7 @@ export function DocFooterNote({ children }: { children?: ReactNode }) {
   const t = useT()
   return (
     <div className="mt-8 border-t pt-3 text-center text-[10.5px] text-[#8a95a5]">
-      {children ?? t('Demo document generated by MeatFlow ERP prototype — not a ZATCA-certified e-invoice.')}
+      {children ?? t('This is a computer-generated document. Thank you for your business.')}
     </div>
   )
 }

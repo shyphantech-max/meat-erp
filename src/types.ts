@@ -1,5 +1,5 @@
 /**
- * MeatFlow ERP domain model.
+ * Zad ERP domain model.
  * All money is SAR unless a field says otherwise; all quantities are KG.
  * Dates are local calendar days ('YYYY-MM-DD'); `createdAt` fields are ISO timestamps.
  */
@@ -485,6 +485,26 @@ export interface ArchiveMonth {
   muttonSales: number
 }
 
+/** access control: roles define which modules a user may open; drivers only get the driver app */
+export interface AccessRole {
+  key: string
+  label: string
+  description: string
+  kind: 'staff' | 'driver'
+  modules: string[] // ModuleKey[] (see src/lib/rbac.ts)
+  system: boolean // built-in roles cannot be deleted
+}
+export interface AppUser {
+  id: ID
+  name: string
+  email: string
+  password: string
+  roleKey: string
+  driverId?: ID
+  active: boolean
+  lastLoginAt?: string
+}
+
 export interface DB {
   version: number
   settings: Settings
@@ -512,6 +532,8 @@ export interface DB {
   notifications: AppNotification[]
   activity: ActivityLog[]
   archive: ArchiveMonth[]
+  roles: AccessRole[]
+  users: AppUser[]
   counters: Record<string, number>
 }
 

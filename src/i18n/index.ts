@@ -34,5 +34,5 @@ export const useLang = () => useUI((s) => s.lang)
 /** pick the Arabic name of a master record when Arabic is active */
 export function useName() {
   const lang = useUI((s) => s.lang)
-  return useCallback((e?: { name: string; nameAr?: string } | null) => (!e ? '—' : lang === 'ar' && e.nameAr ? e.nameAr : e.name), [lang])
+  return useCallback((e?: { name: string; nameAr?: string } | null) => (!e ? '-' : lang === 'ar' && e.nameAr ? e.nameAr : e.name), [lang])
 }

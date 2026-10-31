@@ -281,7 +281,7 @@ export function qcGRN(db: DB, ctx: Ctx, id: ID, lines: { productId: ID; accepted
 export function approveGRN(db: DB, ctx: Ctx, id: ID): Result {
   const g = db.grns.find((x) => x.id === id)
   if (!g) return fail('GRN not found')
-  if (g.status === 'approved') return fail('GRN is already approved — stock was posted once', 'ALREADY')
+  if (g.status === 'approved') return fail('GRN is already approved - stock was posted once', 'ALREADY')
   if (g.status !== 'qc_passed') return fail('Complete the quality check before approval')
   const po = db.purchaseOrders.find((p) => p.id === g.poId)!
   for (const l of g.lines) {
@@ -538,6 +538,16 @@ export function assignOrders(db: DB, ctx: Ctx, soIds: ID[], driverId: ID, date: 
   notify(db, ctx, { audience: 'driver', driverId, kind: 'info', title: 'New deliveries assigned', body: `${soIds.length} stop(s) added to your route`, link: '/driver' })
   return { ok: true, id: driverId }
 }
+export function cancelSalesOrder(db: DB, ctx: Ctx, id: ID, reason: string): Result {
+  const so = db.salesOrders.find((s) => s.id === id)
+  if (!so) return fail('Order not found')
+  if (so.status !== 'open') return fail('Only open (unassigned) orders can be cancelled')
+  if (!reason.trim()) return fail('Enter a reason')
+  so.status = 'cancelled'
+  so.notes = [so.notes, `Cancelled: ${reason}`].filter(Boolean).join(' · ')
+  log(db, ctx, 'Sales order cancelled', so.soNo)
+  return { ok: true, id }
+}
 export function reorderRoute(db: DB, ctx: Ctx, deliveryId: ID, dir: -1 | 1): Result {
   const dl = db.deliveries.find((x) => x.id === deliveryId)
   if (!dl) return fail('Delivery not found')
@@ -671,8 +681,8 @@ export function salesReturn(
   const amount = invoiceTotals(rLines, inv.vatRate).total
   const credit = round2(Math.min(amount, inv.total - inv.returned))
   inv.returned = round2(inv.returned + credit)
-  // if the return pushes paid + returned over the total, the excess becomes unapplied credit; we cap paid instead
-  if (inv.paid + inv.returned > inv.total) inv.paid = round2(inv.total - inv.returned)
+  // if the invoice was already paid, the credit note leaves an unapplied customer credit (balance floors at 0;
+  // the ledger shows the credit). Payments are never rewritten, so receipts and settlements stay intact.
   inv.status = invoiceStatusFor(inv)
   const returnNo = nextNo(db, 'ret', 'SR', yr(input.date), 4)
   const driver = driverId ? db.drivers.find((d) => d.id === driverId) : undefined
@@ -803,7 +813,7 @@ export function submitSettlement(db: DB, ctx: Ctx, input: { driverId: ID; date: 
   if (existing) return fail(`Settlement ${existing.settlementNo} is already ${existing.status.replace('_', ' ')}`, 'ALREADY')
   const calc = computeSettlement(db, d.id, input.date)
   const pendingStops = db.deliveries.filter((x) => x.driverId === d.id && x.date === input.date && ['pending', 'out_for_delivery'].includes(x.status))
-  if (pendingStops.length) return fail(`${pendingStops.length} delivery stop(s) still pending — complete or fail them first`)
+  if (pendingStops.length) return fail(`${pendingStops.length} delivery stop(s) still pending - complete or fail them first`)
   if (!(input.cashHandedOver >= 0)) return fail('Enter the cash handed over')
   if (!calc.rows.length && !calc.paymentIds.length) return fail('No van activity found for this day')
   const rows = calc.rows.map((r) => ({ ...r, physical: round2(input.physical?.[r.productId] ?? r.closing) }))

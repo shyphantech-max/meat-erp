@@ -1,7 +1,6 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import { setFormatLang } from '@/lib/format'
-import { DRIVERS } from '@/data/master'
 
 export type Role = 'admin' | 'driver'
 export type RangePreset = 'today' | '7d' | '30d' | 'mtd' | '90d'
@@ -19,9 +18,13 @@ interface UIState {
   toggleSidebar: () => void
   setMobileNav: (v: boolean) => void
   setRange: (r: RangePreset) => void
+  /** demo admin session */
+  authed: boolean
+  /** signed-in staff user (db.users id) */
+  userId: string
+  signIn: (userId: string) => void
+  signOut: () => void
 }
-
-export const ADMIN_USER = 'Abdulrahman Al Saleh'
 
 export const useUI = create<UIState>()(
   persist(
@@ -41,21 +44,15 @@ export const useUI = create<UIState>()(
       toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
       setMobileNav: (mobileNavOpen) => set({ mobileNavOpen }),
       setRange: (range) => set({ range }),
+      authed: false,
+      userId: '',
+      signIn: (userId) => set({ authed: true, userId, role: 'admin' }),
+      signOut: () => set({ authed: false }),
     }),
     {
       name: 'meatflow-erp-ui',
-      partialize: (s) => ({ lang: s.lang, role: s.role, driverId: s.driverId, sidebarCollapsed: s.sidebarCollapsed, range: s.range }),
+      partialize: (s) => ({ lang: s.lang, role: s.role, driverId: s.driverId, sidebarCollapsed: s.sidebarCollapsed, range: s.range, authed: s.authed, userId: s.userId }),
       onRehydrateStorage: () => (s) => s && setFormatLang(s.lang),
     },
   ),
 )
-
-/** name stamped on every transaction (audit trail) */
-export function currentUserName() {
-  const s = useUI.getState()
-  if (s.role === 'driver') {
-    const i = Number(s.driverId.split('_')[1]) - 1
-    return DRIVERS[i]?.[0] ?? 'Driver'
-  }
-  return ADMIN_USER
-}

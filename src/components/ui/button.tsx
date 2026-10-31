@@ -8,12 +8,12 @@ export const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-brand-strong disabled:opacity-100 disabled:bg-[#c9ced8] disabled:text-white disabled:shadow-none dark:disabled:bg-[#2a3653] dark:disabled:text-[#7f8aa1]',
+        default: 'bg-primary text-primary-foreground shadow-xs hover:bg-brand-strong disabled:opacity-100 disabled:bg-[#c5d1c9] disabled:text-white disabled:shadow-none dark:disabled:bg-[#2a3653] dark:disabled:text-[#7f8aa1]',
         destructive: 'bg-destructive text-white shadow-xs hover:bg-destructive/90',
         outline: 'border bg-card shadow-xs hover:bg-muted',
         secondary: 'border border-brand-ink/80 bg-card text-brand-ink shadow-xs hover:bg-brand-soft dark:border-brand-ink/50',
         ghost: 'hover:bg-muted',
-        dark: 'bg-navy text-white hover:bg-[#221b2c] dark:bg-white dark:text-navy dark:hover:bg-white/90',
+        dark: 'bg-navy text-white hover:bg-[#1a3f2b] dark:bg-white dark:text-navy dark:hover:bg-white/90',
         link: 'text-foreground underline-offset-4 hover:underline',
       },
       size: {

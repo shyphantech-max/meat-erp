@@ -11,7 +11,7 @@ import type { DB, Result } from '@/types'
 import { buildSeed, DB_VERSION } from '@/data/seed'
 import type { Ctx } from './logic'
 import { todayKey } from '@/lib/format'
-import { useUI, currentUserName } from './useUI'
+import { useUI } from './useUI'
 
 interface State {
   db: DB
@@ -21,7 +21,12 @@ interface State {
   markNotificationsRead: (audience: 'admin' | 'driver', driverId?: string) => void
 }
 
-export const makeCtx = (): Ctx => ({ user: currentUserName(), today: todayKey(), now: new Date().toISOString() })
+/** who is acting: the signed-in driver in the driver app, otherwise the signed-in staff user (audit trail) */
+export function makeCtx(db: DB): Ctx {
+  const ui = useUI.getState()
+  const user = ui.role === 'driver' ? db.drivers.find((d) => d.id === ui.driverId)?.name : db.users?.find((u) => u.id === ui.userId)?.name
+  return { user: user ?? 'User', today: todayKey(), now: new Date().toISOString() }
+}
 
 export const useStore = create<State>()(
   persist(
@@ -31,10 +36,10 @@ export const useStore = create<State>()(
       run: (fn) => {
         let res!: ReturnType<typeof fn>
         const next = produce(get().db, (draft) => {
-          res = fn(draft as DB, makeCtx())
+          res = fn(draft as DB, makeCtx(get().db))
           // returning nothing keeps the draft; a failed result is discarded below
         })
-        if (res?.ok) set({ db: next, touched: true })
+        if ((res as unknown as { ok?: boolean })?.ok) set({ db: next, touched: true })
         return res
       },
       reset: () => set({ db: buildSeed(todayKey()), touched: false }),

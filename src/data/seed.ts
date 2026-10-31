@@ -8,11 +8,12 @@
 import type { DayKey, DB, ID, SalesLine, Settings } from '@/types'
 import { round2, shiftDay, todayKey } from '@/lib/format'
 import { mulberry32 } from '@/lib/random'
+import { defaultRoles, defaultUsers } from '@/lib/rbac'
 import { CUSTOMERS, DRIVERS, FX, PREFS, QTY, VEHICLES, masterProducts, masterSuppliers, masterWarehouses } from './master'
 import * as L from '@/store/logic'
 import { customerPrice, invoiceBalance, sellableStock, vanStockByProduct } from '@/store/derive'
 
-export const DB_VERSION = 3
+export const DB_VERSION = 4
 
 const at = (d: DayKey, hhmm: string) => new Date(`${d}T${hhmm}:00`).toISOString()
 
@@ -37,7 +38,7 @@ export function emptyDB(today: DayKey): DB {
   return {
     version: DB_VERSION, settings, products: [], warehouses: [], suppliers: [], purchaseOrders: [], supplierPayments: [], shipments: [], grns: [], batches: [],
     stockMovements: [], customers: [], drivers: [], vehicles: [], salesOrders: [], deliveries: [], invoices: [], salesReturns: [], payments: [], vanLoads: [],
-    vanMovements: [], stockLosses: [], settlements: [], notifications: [], activity: [], archive: [], counters: {},
+    vanMovements: [], stockLosses: [], settlements: [], notifications: [], activity: [], archive: [], roles: [], users: [], counters: {},
   }
 }
 
@@ -75,6 +76,8 @@ export function buildSeed(today: DayKey = todayKey()): DB {
       driverId: `drv_${drv}`, creditLimit, paymentTermsDays, defaultPayment, prices, active: true,
     }
   })
+  db.roles = defaultRoles()
+  db.users = defaultUsers(db.drivers)
   db.counters = { po: 1080, grn: 1040, inv: 4100, so: 6200, dlv: 7300, rcpt: 2600, load: 900, stl: 300, shp: 210, spay: 440, vret: 300, ret: 60, trf: 40, adj: 30, loss: 10 }
 
   // ───── register archive: monthly totals migrated from the paper books (before go-live) ─────
@@ -154,7 +157,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
     }, 'Purchasing Officer')
     if (['draft', 'pending'].includes(spec.fate)) return
     ev(date, '15:30', `PO ${n} decision`, (ctx) =>
-      must(spec.fate === 'rejected' ? L.setPOStatus(db, ctx, ids[key], 'reject', 'Rate above contract price — renegotiate') : L.setPOStatus(db, ctx, ids[key], 'approve'), `approve ${n}`), 'Owner · Abdulrahman Al Saleh')
+      must(spec.fate === 'rejected' ? L.setPOStatus(db, ctx, ids[key], 'reject', 'Rate above contract price - renegotiate') : L.setPOStatus(db, ctx, ids[key], 'approve'), `approve ${n}`), 'Owner · Abdulrahman Al Saleh')
     if (spec.fate === 'rejected') return
     // import shipment
     if (spec.kind === 'import') {
@@ -194,7 +197,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
         if (!r) return
         ids[`grn${tag}`] = r.id
         if (stage === 'received') return
-        if (stage === 'rejected') return must(L.rejectGRN(db, ctx, r.id, 'Truck temperature 9.4°C on arrival (limit 4°C) — product refused'), 'rej grn')
+        if (stage === 'rejected') return must(L.rejectGRN(db, ctx, r.id, 'Truck temperature 9.4°C on arrival (limit 4°C) - product refused'), 'rej grn')
         const g = db.grns.find((x) => x.id === r.id)!
         const qc = g.lines.map((l) => {
           const rej = rnd() < 0.25 ? Math.round(l.receivedKg * between(0.002, 0.012)) : 0
@@ -360,10 +363,10 @@ export function buildSeed(today: DayKey = todayKey()): DB {
         if (!dl) return
         if (st.outcome === 'pending') return
         if (st.outcome === 'out') return must(L.setOutForDelivery(db, ctx, dl.id), 'out')
-        if (st.outcome === 'failed') return must(L.completeDelivery(db, ctx, { deliveryId: dl.id, lines: [], failed: true, failReason: pickR(['Customer premises closed', 'Receiver not available', 'Customer refused – asked to deliver tomorrow']) }), 'fail')
+        if (st.outcome === 'failed') return must(L.completeDelivery(db, ctx, { deliveryId: dl.id, lines: [], failed: true, failReason: pickR(['Customer premises closed', 'Receiver not available', 'Customer refused - asked to deliver tomorrow']) }), 'fail')
         const van = vanStockByProduct(db, drv.id)
         const lines = dl.lines.map((l) => ({ productId: l.productId, deliveredKg: Math.min(van[l.productId] ?? 0, st.outcome === 'partial' ? Math.round(l.orderedKg * 0.7) : l.orderedKg) }))
-        const r = must(L.completeDelivery(db, ctx, { deliveryId: dl.id, lines, allowOverLimit: true, notes: st.outcome === 'partial' ? 'Customer accepted part quantity — cold-room space full' : undefined }), `deliver ${k}.${s}`)
+        const r = must(L.completeDelivery(db, ctx, { deliveryId: dl.id, lines, allowOverLimit: true, notes: st.outcome === 'partial' ? 'Customer accepted part quantity - cold-room space full' : undefined }), `deliver ${k}.${s}`)
         if (!r) return
         const inv = db.invoices.find((i) => i.id === r.invoiceId)!
         if (st.collect && st.collect !== 'none') {
@@ -395,7 +398,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
         const r = must(L.vanSale(db, ctx, { driverId: drv.id, customerId: buyer.id, date, lines, paymentType: 'cash', allowOverLimit: true }), `vansale ${k}`)
         if (r) {
           const inv = db.invoices.find((i) => i.id === r.id)!
-          must(L.recordPayment(db, { ...ctx, now: at(date, day.ago === 0 ? '09:42' : '13:22') }, { customerId: buyer.id, driverId: drv.id, date, method: 'cash', amount: inv.total, allocations: [{ invoiceId: inv.id, amount: inv.total }], notes: 'Van sale – cash' }), 'vansale pay')
+          must(L.recordPayment(db, { ...ctx, now: at(date, day.ago === 0 ? '09:42' : '13:22') }, { customerId: buyer.id, driverId: drv.id, date, method: 'cash', amount: inv.total, allocations: [{ invoiceId: inv.id, amount: inv.total }], notes: 'Van sale - cash' }), 'vansale pay')
         }
       }, drv.name)
     }
@@ -406,7 +409,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
         const inv = db.invoices.find((i) => i.driverId === drv.id && i.date === date && i.source === 'delivery')
         if (!inv) return
         const l = inv.lines[0]
-        must(L.salesReturn(db, ctx, { invoiceId: inv.id, date, lines: [{ productId: l.productId, qtyKg: Math.min(l.qtyKg, 10) }], reason: 'Packaging torn – customer refused 10 kg', destination: 'van', condition: 'resaleable', driverId: drv.id }), 'return')
+        must(L.salesReturn(db, ctx, { invoiceId: inv.id, date, lines: [{ productId: l.productId, qtyKg: Math.min(l.qtyKg, 10) }], reason: 'Packaging torn - customer refused 10 kg', destination: 'van', condition: 'resaleable', driverId: drv.id }), 'return')
       }, drv.name)
     }
     // end of day: return remaining van stock (some frozen stock may stay on the reefer overnight)
@@ -419,7 +422,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
     if (!day.settle) return
     ev(date, day.ago === 0 ? '10:15' : '18:45', `settle ${k}`, (ctx) => {
       const s = db.payments.filter((p) => p.driverId === drv.id && p.date === date && p.method === 'cash').reduce((t2, p) => t2 + p.amount, 0)
-      must(L.submitSettlement(db, { ...ctx, user: drv.name }, { driverId: drv.id, date, cashHandedOver: round2(s - (day.shortage ?? 0)), notes: day.shortage ? 'Short SAR 150 — customer paid less, will collect tomorrow' : 'All stops complete' }), `settle ${k}`)
+      must(L.submitSettlement(db, { ...ctx, user: drv.name }, { driverId: drv.id, date, cashHandedOver: round2(s - (day.shortage ?? 0)), notes: day.shortage ? 'Short SAR 150 - customer paid less, will collect tomorrow' : 'All stops complete' }), `settle ${k}`)
     }, drv.name)
     const sid = () => db.settlements.find((x) => x.driverId === drv.id && x.date === date)?.id ?? ''
     const steps: ('under_review' | 'verified' | 'approved' | 'closed')[] =
@@ -444,7 +447,7 @@ export function buildSeed(today: DayKey = todayKey()): DB {
   // a damaged stock write-off and a transfer for the inventory history
   ev(D(-6), '14:00', 'damage', (ctx) => {
     const b = db.batches.find((x) => x.productId === pid(5) && x.warehouseId === 'wh_1')
-    if (b) must(L.adjustStock(db, ctx, { batchId: b.id, qtyKg: 40, type: 'damage', reason: 'Forklift damage — 4 cartons crushed', date: D(-6) }), 'damage')
+    if (b) must(L.adjustStock(db, ctx, { batchId: b.id, qtyKg: 40, type: 'damage', reason: 'Forklift damage - 4 cartons crushed', date: D(-6) }), 'damage')
   })
   ev(D(-10), '10:00', 'transfer', (ctx) => must(L.transferStock(db, ctx, { fromWh: 'wh_1', toWh: 'wh_3', productId: pid(9), qtyKg: 900, date: D(-10), note: 'Rebalance mutton stock for Eastern Province' }), 'transfer'))
 

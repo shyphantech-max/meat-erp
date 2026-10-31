@@ -2,61 +2,67 @@
 @import 'tw-animate-css';
 
 /*
- * MeatFlow ERP tokens
- *   Deep Emerald #087F5B (primary)   Dark Navy #14283F (secondary)   Background #F7F9FC
- * Semantic success / warning / danger are used only for status. Typography: Inter
- * (IBM Plex Sans Arabic when Arabic is active).
+ * Zad ERP brand tokens - taken from the company logo (rooster & sheep in a green ring)
+ *   Logo green   #018247 / #026533  → primary (actions, active nav, chicken series)
+ *   Fresh green  #71CE57            → highlights
+ *   Sheep maroon #660C05            → secondary (mutton series, secondary accents)
+ *   Rooster red  #E40F19            → small attention accents only
+ * Dark surfaces (sidebar, driver app bars) use a deep forest green so the logo sits naturally.
  */
 :root {
   --radius: 0.7rem;
-  --navy: #14283f;
-  --brand: #087f5b;
-  --brand-strong: #066a4c;
-  --brand-ink: #14283f;
-  --brand-soft: #e7f5ef;
-  --brand-muted: #b9e2d2;
+  --navy: #0f2a1c; /* dark surface (kept as token name for compatibility) */
+  --maroon: #6e1209;
+  --maroon-soft: #f8ebe9;
+  --red: #e40f19;
+  --fresh: #71ce57;
+  --brand: #047a3f;
+  --brand-strong: #03602f;
+  --brand-ink: #13261b;
+  --brand-soft: #e8f5ec;
+  --brand-muted: #a5df8f;
 
-  --success: #0f7a45;
-  --success-soft: #e5f5ec;
+  --success: #12803f;
+  --success-soft: #e6f5eb;
   --warning: #b45309;
   --warning-soft: #fdf3e2;
-  --danger: #c2341f;
-  --danger-soft: #fdecea;
+  --danger: #c4161c;
+  --danger-soft: #fdecec;
   --info: #1d5fa8;
   --info-soft: #e8f0fa;
 
-  --background: #f7f9fc;
-  --foreground: #14202e;
+  --background: #f6f8f6;
+  --foreground: #172119;
   --card: #ffffff;
-  --card-foreground: #14202e;
+  --card-foreground: #172119;
   --popover: #ffffff;
-  --popover-foreground: #14202e;
-  --primary: #087f5b;
+  --popover-foreground: #172119;
+  --primary: #047a3f;
   --primary-foreground: #ffffff;
-  --secondary: #eef2f7;
-  --secondary-foreground: #14283f;
-  --muted: #f1f4f8;
-  --muted-foreground: #5f6b7a;
-  --accent: #e7f5ef;
-  --accent-foreground: #14283f;
-  --destructive: #c2341f;
-  --border: #e3e8ef;
-  --input: #d5dce6;
-  --ring: #087f5b;
+  --secondary: #eef3ef;
+  --secondary-foreground: #13261b;
+  --muted: #f0f4f1;
+  --muted-foreground: #5d6b62;
+  --accent: #e8f5ec;
+  --accent-foreground: #13261b;
+  --destructive: #c4161c;
+  --border: #e1e8e3;
+  --input: #d2ddd5;
+  --ring: #047a3f;
 
-  --sidebar: #14283f;
+  --sidebar: #0f2a1c;
   --sidebar-foreground: #ffffff;
-  --sidebar-muted: #9fb0c4;
-  --sidebar-accent: #1e3755;
+  --sidebar-muted: #a3bcad;
+  --sidebar-accent: #1a3f2b;
   --sidebar-border: rgba(255, 255, 255, 0.08);
 
-  --chart-1: #087f5b;
-  --chart-2: #14283f;
-  --chart-3: #63c2a0;
-  --chart-4: #8a98aa;
+  --chart-1: #047a3f;
+  --chart-2: #7a1a12;
+  --chart-3: #71ce57;
+  --chart-4: #8f9c94;
   --chart-5: #d99a2b;
-  --chart-grid: #edf1f5;
-  --chart-axis: #6b7787;
+  --chart-grid: #edf2ee;
+  --chart-axis: #66756b;
 }
 
 @theme inline {
@@ -85,6 +91,10 @@
   --color-input: var(--input);
   --color-ring: var(--ring);
   --color-navy: var(--navy);
+  --color-maroon: var(--maroon);
+  --color-maroon-soft: var(--maroon-soft);
+  --color-red: var(--red);
+  --color-fresh: var(--fresh);
   --color-brand: var(--brand);
   --color-brand-strong: var(--brand-strong);
   --color-brand-ink: var(--brand-ink);
