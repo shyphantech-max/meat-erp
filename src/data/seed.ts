@@ -13,7 +13,7 @@ import { CUSTOMERS, DRIVERS, FX, PREFS, QTY, VEHICLES, masterProducts, masterSup
 import * as L from '@/store/logic'
 import { customerPrice, invoiceBalance, sellableStock, vanStockByProduct } from '@/store/derive'
 
-export const DB_VERSION = 4
+export const DB_VERSION = 5
 
 const at = (d: DayKey, hhmm: string) => new Date(`${d}T${hhmm}:00`).toISOString()
 
@@ -75,6 +75,11 @@ export function buildSeed(today: DayKey = todayKey()): DB {
       city, district, address: `${district} District, ${city}`, vatNo: `3${String(Math.floor(between(10000000000000, 99999999999999)))}`,
       driverId: `drv_${drv}`, creditLimit, paymentTermsDays, defaultPayment, prices, active: true,
     }
+  })
+  // walk-in (retail) customer used by the counter / POS
+  db.customers.push({
+    id: 'cus_walkin', code: 'CUS-WALKIN', name: 'Walk-in Customer', nameAr: 'عميل نقدي (زائر)', businessType: 'walk_in', contactPerson: '-', phone: '-', email: '-',
+    city: 'Riyadh', district: 'Al Sulay', address: 'Counter sales - Riyadh Central Cold Store', vatNo: '-', creditLimit: 0, paymentTermsDays: 0, defaultPayment: 'cash', prices: {}, active: true,
   })
   db.roles = defaultRoles()
   db.users = defaultUsers(db.drivers)
@@ -442,6 +447,17 @@ export function buildSeed(today: DayKey = todayKey()): DB {
         customerId: c.id, date: today, deliveryDate: D(1), paymentType: c.defaultPayment,
         lines: prefs.slice(s % 2, (s % 2) + 2).map((pi) => ({ productId: pid(pi), qtyKg: Math.round(between(4, 14)) * db.products[pi].cartonKg, price: customerPrice(c, db.products[pi]) })),
       }), 'tomorrow'), 'Sales Desk · Lina Al Harbi')
+  })
+
+  // walk-in counter sales (cash / card)
+  ;([[-1, '10:20', [[2, 4.5], [10, 3.2]], 'cash'], [-1, '17:45', [[0, 10], [14, 1.5]], 'card'], [0, '09:05', [[2, 6], [3, 2]], 'cash']] as [number, string, [number, number][], 'cash' | 'card'][]).forEach(([ago, time, lines, method], k) => {
+    const date = D(ago)
+    ev(date, time, `counter ${k}`, (ctx) => {
+      const r = must(L.directInvoice(db, ctx, { customerId: 'cus_walkin', warehouseId: 'wh_1', date, paymentType: 'cash', notes: 'Walk-in counter sale', lines: lines.map(([pi, kg]) => ({ productId: pid(pi), qtyKg: kg, price: db.products[pi].sellPrice })) }), 'counter')
+      if (!r) return
+      const inv = db.invoices.find((i) => i.id === r.id)!
+      must(L.recordPayment(db, ctx, { customerId: 'cus_walkin', date, method: method === 'cash' ? 'cash' : 'bank', bankRef: method === 'card' ? `MADA-${inv.invNo}` : undefined, amount: inv.total, allocations: [{ invoiceId: inv.id, amount: inv.total }], allowRepeat: true, notes: method === 'card' ? 'Card (Mada) at counter' : 'Cash at counter' }), 'counter pay')
+    }, 'Nouf Al Harbi')
   })
 
   // a damaged stock write-off and a transfer for the inventory history

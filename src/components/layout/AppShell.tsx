@@ -125,6 +125,11 @@ export function AppShell() {
   }, [authed, session.valid, signOut])
   if (!authed || !session.valid) return <Navigate to="/login" replace state={{ from: loc.pathname + loc.search }} />
   const allowed = session.can(moduleForPath(loc.pathname))
+  // roles without the dashboard (e.g. counter cashier) start on their first module
+  if (!allowed && loc.pathname === '/' && session.modules.length) {
+    const first = ALL_ITEMS.find((i) => i.key === session.modules.find((m) => ALL_ITEMS.some((x) => x.key === m)))
+    if (first) return <Navigate to={first.path} replace />
+  }
   return (
     <div className="flex min-h-dvh">
       <Sidebar />

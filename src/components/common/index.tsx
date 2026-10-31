@@ -81,7 +81,7 @@ export function PageHeader({ title, description, actions, icon: Icon, badge }: {
 export function Panel({ title, description, actions, children, className, bodyClassName, icon: Icon }: { title?: ReactNode; description?: ReactNode; actions?: ReactNode; children: ReactNode; className?: string; bodyClassName?: string; icon?: LucideIcon }) {
   const t = useT()
   return (
-    <Card className={cn('gap-0 overflow-hidden p-0', className)}>
+    <Card className={cn('flex flex-col gap-0 overflow-hidden p-0', className)}>
       {(title || actions) && (
         <div className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-3">
           <div className="flex min-w-0 items-center gap-2">
@@ -94,7 +94,7 @@ export function Panel({ title, description, actions, children, className, bodyCl
           {actions && <div className="flex items-center gap-1.5">{actions}</div>}
         </div>
       )}
-      <div className={cn('p-4', bodyClassName)}>{children}</div>
+      <div className={cn('flex-1 p-4', bodyClassName)}>{children}</div>
     </Card>
   )
 }

@@ -102,6 +102,7 @@ export const PREFS: Record<BusinessType, number[]> = {
   supermarket: [0, 1, 6, 5, 8, 2, 3, 13, 14],
   wholesale: [6, 0, 1, 9, 13, 5, 8],
   catering: [0, 9, 13, 3, 7, 11, 2],
+  walk_in: [2, 0, 10, 14, 3, 5],
 }
 export const QTY: Record<BusinessType, [number, number]> = {
   restaurant: [40, 140],
@@ -109,4 +110,5 @@ export const QTY: Record<BusinessType, [number, number]> = {
   supermarket: [90, 260],
   wholesale: [250, 600],
   catering: [80, 220],
+  walk_in: [1, 12],
 }

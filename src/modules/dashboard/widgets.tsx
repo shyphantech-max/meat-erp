@@ -98,10 +98,10 @@ export function MiniKpi({ label, value, sub, icon: Icon, tone = 'brand', to, ale
 export function GlanceTile({ label, value, hint, icon: Icon, to, highlight }: { label: string; value: ReactNode; hint?: ReactNode; icon: LucideIcon; to: string; highlight?: boolean }) {
   const t = useT()
   return (
-    <Link to={to} className={cn('group flex min-w-0 items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 transition-colors hover:border-brand/40 hover:bg-brand-soft/30', highlight && 'border-warning/40 bg-warning-soft/40')}>
+    <Link to={to} className={cn('group flex h-full min-w-0 items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 transition-colors hover:border-brand/40 hover:bg-brand-soft/30 xl:flex-col xl:items-start xl:gap-2', highlight && 'border-warning/40 bg-warning-soft/40')}>
       <span className={cn('flex size-8 shrink-0 items-center justify-center rounded-lg', highlight ? 'bg-warning-soft text-warning' : 'bg-brand-soft text-brand')}><Icon className="size-4" /></span>
-      <span className="min-w-0 leading-tight">
-        <span className="block truncate text-[11px] text-muted-foreground">{t(label)}</span>
+      <span className="w-full min-w-0 leading-tight">
+        <span className="line-clamp-1 text-[11px] text-muted-foreground xl:line-clamp-2 xl:min-h-[2.3em]">{t(label)}</span>
         <span className="block truncate text-[15px] font-bold text-brand-ink tabular">{value}</span>
         {hint && <span className="block truncate text-[10.5px] text-muted-foreground">{hint}</span>}
       </span>
@@ -124,7 +124,7 @@ export function Gauge({ value, color, label, sub }: { value: number | null; colo
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center pt-2">
         <span className="text-[26px] font-bold text-brand-ink tabular">{value === null ? '-' : `${fmtNum(value, 0)}%`}</span>
         <span className="text-[11.5px] text-muted-foreground">{t(label)}</span>
-        {sub && <span className="mt-0.5 text-[11px] text-muted-foreground">{sub}</span>}
+        {sub && <span className="mt-0.5 max-w-[60%] truncate text-center text-[11px] text-muted-foreground">{sub}</span>}
       </div>
     </div>
   )
@@ -162,6 +162,7 @@ export function ViewAll({ to, label = 'View all' }: { to: string; label?: string
 }
 
 /** fixed-height chart box: 240px on phones, taller on desktop */
-export const ChartBox = ({ children, tall }: { children: ReactNode; tall?: boolean }) => <div className={cn('w-full', tall ? 'h-[260px] sm:h-72' : 'h-[240px] sm:h-64')}>{children}</div>
+/** chart area: fixed minimum height, grows to fill the panel when the row is taller */
+export const ChartBox = ({ children, tall }: { children: ReactNode; tall?: boolean }) => <div className={cn('w-full grow', tall ? 'h-[260px] sm:h-72' : 'h-[240px] sm:h-64')}>{children}</div>
 
 export const shortName = (s: string, n = 16) => (s.length > n ? `${s.slice(0, n - 1)}…` : s)

@@ -6,21 +6,22 @@ import type { AccessRole, AppUser, DB } from '@/types'
 
 export type ModuleKey =
   | 'dashboard' | 'purchases' | 'imports' | 'grn' | 'inventory' | 'customers' | 'sales' | 'fleet'
-  | 'distribution' | 'collections' | 'settlement' | 'accounts' | 'reports' | 'settings' | 'access'
+  | 'distribution' | 'collections' | 'settlement' | 'accounts' | 'reports' | 'settings' | 'access' | 'pos'
 
-export const ALL_MODULES: ModuleKey[] = ['dashboard', 'purchases', 'imports', 'grn', 'inventory', 'customers', 'sales', 'fleet', 'distribution', 'collections', 'settlement', 'accounts', 'reports', 'settings', 'access']
+export const ALL_MODULES: ModuleKey[] = ['dashboard', 'pos', 'purchases', 'imports', 'grn', 'inventory', 'customers', 'sales', 'fleet', 'distribution', 'collections', 'settlement', 'accounts', 'reports', 'settings', 'access']
 
 /** preferred order of bottom-tab shortcuts on phones; the first four the role can open are used */
-const TAB_PRIORITY: ModuleKey[] = ['dashboard', 'distribution', 'collections', 'settlement', 'grn', 'inventory', 'sales', 'accounts', 'customers', 'purchases', 'reports', 'fleet', 'imports', 'settings', 'access']
+const TAB_PRIORITY: ModuleKey[] = ['pos', 'dashboard', 'distribution', 'collections', 'settlement', 'grn', 'inventory', 'sales', 'accounts', 'customers', 'purchases', 'reports', 'fleet', 'imports', 'settings', 'access']
 export const mobileTabsFor = (modules: string[]) => TAB_PRIORITY.filter((k) => modules.includes(k)).slice(0, 4)
 
 export const DEFAULT_PASSWORD = 'Zad@2026'
 
 export const defaultRoles = (): AccessRole[] => [
   { key: 'owner', label: 'Owner', description: 'Full access to every module, approvals and settings', kind: 'staff', modules: [...ALL_MODULES], system: true },
-  { key: 'supervisor', label: 'Supervisor', description: 'Dispatch, routes, van loading, settlement review and stock', kind: 'staff', modules: ['dashboard', 'grn', 'inventory', 'customers', 'sales', 'fleet', 'distribution', 'collections', 'settlement', 'reports'], system: true },
+  { key: 'supervisor', label: 'Supervisor', description: 'Dispatch, routes, van loading, settlement review and stock', kind: 'staff', modules: ['dashboard', 'pos', 'grn', 'inventory', 'customers', 'sales', 'fleet', 'distribution', 'collections', 'settlement', 'reports'], system: true },
   { key: 'accountant', label: 'Accountant', description: 'Invoices, collections, receivables, payables and reports', kind: 'staff', modules: ['dashboard', 'purchases', 'imports', 'customers', 'sales', 'collections', 'settlement', 'accounts', 'reports'], system: true },
   { key: 'storekeeper', label: 'Store Keeper', description: 'Goods receiving, quality check, stock and van loading', kind: 'staff', modules: ['dashboard', 'purchases', 'imports', 'grn', 'inventory', 'distribution'], system: true },
+  { key: 'cashier', label: 'Counter Cashier', description: 'Walk-in counter sales: weigh, bill and collect payment', kind: 'staff', modules: ['pos'], system: true },
   { key: 'driver', label: 'Driver', description: 'Driver app: route, deliveries, collections and settlement', kind: 'driver', modules: [], system: true },
 ]
 
@@ -30,6 +31,7 @@ export function defaultUsers(drivers: DB['drivers']): AppUser[] {
     { id: 'usr_sup', name: 'Omar Saeed', email: 'supervisor@alwahameat.sa', password: DEFAULT_PASSWORD, roleKey: 'supervisor', active: true },
     { id: 'usr_acc', name: 'Sara Al Mutlaq', email: 'accounts@alwahameat.sa', password: DEFAULT_PASSWORD, roleKey: 'accountant', active: true },
     { id: 'usr_store', name: 'Ramesh Pillai', email: 'store@alwahameat.sa', password: DEFAULT_PASSWORD, roleKey: 'storekeeper', active: true },
+    { id: 'usr_counter', name: 'Nouf Al Harbi', email: 'counter@alwahameat.sa', password: DEFAULT_PASSWORD, roleKey: 'cashier', active: true },
   ]
   const slug = (n: string) => n.toLowerCase().replace(/^(al )/, '').replace(/\b(al|bin) /g, '').replace(/[^a-z]+/g, '.').replace(/^\.|\.$/g, '')
   return [

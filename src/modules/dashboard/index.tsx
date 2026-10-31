@@ -76,7 +76,7 @@ export default function Dashboard() {
 
       {/* sales trend + alerts */}
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Daily sales vs collections" description={rangeLabel} className="xl:col-span-2" actions={<Legend items={[{ label: t('Sales'), color: CHART.brand }, { label: t('Collections'), color: CHART.maroon }]} />}>
+        <Panel title="Daily sales vs collections" description={rangeLabel} className="xl:col-span-2" actions={<Legend items={[{ label: t('Sales'), color: CHART.brand }, { label: t('Collections'), color: CHART.maroon }]} />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <AreaChart data={d.daily} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -101,7 +101,7 @@ export default function Dashboard() {
 
       {/* profit + collection efficiency */}
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Gross profit & margin" description={`${d.weekly ? t('Weekly') : t('Daily')} · ${t('excl. VAT, net of returns')}`} className="xl:col-span-2" actions={<Legend items={[{ label: t('Revenue'), color: CHART.slate }, { label: t('Gross profit'), color: CHART.brand }, { label: t('Margin %'), color: CHART.maroon }]} />}>
+        <Panel title="Gross profit & margin" description={`${d.weekly ? t('Weekly') : t('Daily')} · ${t('excl. VAT, net of returns')}`} className="xl:col-span-2" actions={<Legend items={[{ label: t('Revenue'), color: CHART.slate }, { label: t('Gross profit'), color: CHART.brand }, { label: t('Margin %'), color: CHART.maroon }]} />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <ComposedChart data={d.gpTrend} margin={{ top: 8, right: 4, left: 0, bottom: 0 }}>
@@ -117,7 +117,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartBox>
         </Panel>
-        <Panel title="Collection efficiency" description={`${rangeLabel} · ${t('collected ÷ sales')}`}>
+        <Panel title="Collection efficiency" description={`${rangeLabel} · ${t('collected ÷ sales')}`} bodyClassName="flex flex-col justify-center">
           <Gauge value={d.cur.sales > 0 ? (d.cur.collections / d.cur.sales) * 100 : null} color={CHART.brand} label="Collected vs billed" sub={`${compact(d.cur.collections)} / ${compact(d.cur.sales)}`} />
           <div className="mt-2 space-y-4">
             <MixBar title="Sales by payment type" format={compact} parts={[{ label: 'Cash', value: d.payType.cash, color: CHART.brand }, { label: 'Credit', value: d.payType.credit, color: CHART.maroon }]} />
@@ -135,7 +135,7 @@ export default function Dashboard() {
 
       {/* monthly + species */}
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Monthly sales trend" description="Register archive before go-live, live ERP data after" className="xl:col-span-2" actions={<Legend items={[{ label: t('Register archive'), color: CHART.slate }, { label: t('Live ERP'), color: CHART.brand }]} />}>
+        <Panel title="Monthly sales trend" description="Register archive before go-live, live ERP data after" className="xl:col-span-2" actions={<Legend items={[{ label: t('Register archive'), color: CHART.slate }, { label: t('Live ERP'), color: CHART.brand }]} />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={d.monthly} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -155,7 +155,7 @@ export default function Dashboard() {
 
       {/* receivables & payables */}
       <div className="grid gap-4 xl:grid-cols-3">
-        <Panel title="Receivables trend by age" description="Outstanding balance at each week end (last 8 weeks)" className="xl:col-span-2" actions={<Legend items={AGE_BUCKETS.map((b, i) => ({ label: `${b} ${t('days')}`, color: AGE_COLORS[i] }))} />}>
+        <Panel title="Receivables trend by age" description="Outstanding balance at each week end (last 8 weeks)" className="xl:col-span-2" actions={<Legend items={AGE_BUCKETS.map((b, i) => ({ label: `${b} ${t('days')}`, color: AGE_COLORS[i] }))} />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={d.receivablesTrend} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -170,7 +170,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartBox>
         </Panel>
-        <Panel title="Customer outstanding ageing" description={`${t('Total')} ${fmtSAR(d.outstanding)}`} actions={<ViewAll to="/accounts?tab=ageing" />}>
+        <Panel title="Customer outstanding ageing" description={`${t('Total')} ${fmtSAR(d.outstanding)}`} actions={<ViewAll to="/accounts?tab=ageing" />} bodyClassName="flex flex-col justify-center">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={AGE_BUCKETS.map((b, i) => ({ bucket: `${b} ${t('days')}`, value: d.ageing[b], color: AGE_COLORS[i] }))} layout="vertical" margin={{ top: 4, right: 12, left: 0, bottom: 0 }}>
@@ -189,7 +189,7 @@ export default function Dashboard() {
 
       {/* stock & payables */}
       <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <Panel title="Stock value by warehouse" description={`${t('Total')} ${fmtSAR(d.stockValue)}`} actions={<Legend items={[{ label: t('Fresh'), color: CAT_COLORS.fresh }, { label: t('Chilled'), color: CAT_COLORS.chilled }, { label: t('Frozen'), color: CAT_COLORS.frozen }]} />}>
+        <Panel title="Stock value by warehouse" description={`${t('Total')} ${fmtSAR(d.stockValue)}`} actions={<Legend items={[{ label: t('Fresh'), color: CAT_COLORS.fresh }, { label: t('Chilled'), color: CAT_COLORS.chilled }, { label: t('Frozen'), color: CAT_COLORS.frozen }]} />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={d.stockByWh.map((w) => ({ ...w, name: t(w.name) }))} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -204,7 +204,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartBox>
         </Panel>
-        <Panel title="Expiry risk" description={`${fmtKg(d.expiryRisk.reduce((s, e) => s + e.kg, 0), 0)} ${t('on hand')}`} actions={<ViewAll to="/inventory?tab=batches" />}>
+        <Panel title="Expiry risk" description={`${fmtKg(d.expiryRisk.reduce((s, e) => s + e.kg, 0), 0)} ${t('on hand')}`} actions={<ViewAll to="/inventory?tab=batches" />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={d.expiryRisk.map((e) => ({ ...e, label: t(e.label) }))} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -219,7 +219,7 @@ export default function Dashboard() {
             </ResponsiveContainer>
           </ChartBox>
         </Panel>
-        <Panel title="Supplier payables due" description={`${t('Total')} ${fmtSAR(d.payables)}`} className="lg:col-span-2 xl:col-span-1" actions={<ViewAll to="/accounts?tab=payables" />}>
+        <Panel title="Supplier payables due" description={`${t('Total')} ${fmtSAR(d.payables)}`} className="lg:col-span-2 xl:col-span-1" actions={<ViewAll to="/accounts?tab=payables" />} bodyClassName="flex flex-col">
           <ChartBox>
             <ResponsiveContainer>
               <BarChart data={d.payBuckets.map((b) => ({ ...b, label: t(b.label) }))} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
@@ -292,10 +292,10 @@ function AlertsPanel({ d }: { d: DashboardData }) {
     <Panel
       title={<span className="flex items-center gap-2">{t('Needs attention')} {d.alerts.length > 0 && <span className="rounded-full bg-red px-1.5 text-[11px] leading-5 font-bold text-white">{d.alerts.length}</span>}</span>}
       icon={ShieldAlert}
-      bodyClassName="p-0"
+      bodyClassName="relative p-0 min-h-[220px]"
     >
       {d.alerts.length ? (
-        <div className="max-h-[300px] divide-y overflow-y-auto sm:max-h-[256px]">
+        <div className="max-h-[300px] divide-y overflow-y-auto xl:absolute xl:inset-0 xl:max-h-none">
           {d.alerts.map((a) => {
             const I = icon[a.kind]
             const x = text(a)
@@ -323,9 +323,9 @@ function TopCustomers({ d }: { d: DashboardData }) {
   const nav = useNavigate()
   const rows = d.topCustomers.map((c) => ({ id: c.id, name: shortName(name(c.customer), 18), value: c.value }))
   return (
-    <Panel title="Top 10 customers" description={t('By sales incl. VAT')} actions={<ViewAll to="/customers" />}>
+    <Panel title="Top 10 customers" description={t('By sales incl. VAT')} actions={<ViewAll to="/customers" />} bodyClassName="flex flex-col">
       {rows.length ? (
-        <div className="h-[300px]">
+        <div className="min-h-[300px] flex-1">
           <ResponsiveContainer>
             <BarChart data={rows} layout="vertical" margin={{ top: 0, right: 12, left: 0, bottom: 0 }} onClick={(e: any) => { const id = e?.activePayload?.[0]?.payload?.id; if (id) nav(`/customers/${id}`) }}>
               <CartesianGrid stroke={CHART.grid} horizontal={false} />
@@ -378,9 +378,9 @@ function TopProducts({ d }: { d: DashboardData }) {
 function BusinessTypes({ d }: { d: DashboardData }) {
   const t = useT()
   const total = d.businessTypes.reduce((s, x) => s + x.value, 0)
-  const label = (k: string) => t(k.charAt(0).toUpperCase() + k.slice(1))
+  const label = (k: string) => t(k === 'walk_in' ? 'Walk-in' : k.charAt(0).toUpperCase() + k.slice(1))
   return (
-    <Panel title="Sales by customer type" description={t('Restaurants, hotels, supermarkets, wholesale, catering')} className="lg:col-span-2 xl:col-span-1">
+    <Panel title="Sales by customer type" description={t('Restaurants, hotels, supermarkets, wholesale, catering')} className="lg:col-span-2 xl:col-span-1" bodyClassName="flex flex-col justify-center">
       {total > 0 ? (
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center xl:flex-col xl:items-stretch">
           <div className="relative h-[190px] sm:w-1/2 xl:w-full">
@@ -423,7 +423,7 @@ function SpeciesMix({ d, rangeLabel }: { d: DashboardData; rangeLabel: string })
   ]
   const total = d.species.chicken + d.species.mutton
   return (
-    <Panel title="Chicken vs mutton sales" description={`${rangeLabel} · ${t('excl. VAT')}`}>
+    <Panel title="Chicken vs mutton sales" description={`${rangeLabel} · ${t('excl. VAT')}`} bodyClassName="flex flex-col justify-center">
       {total > 0 ? (
         <div className="flex flex-col">
           <div className="relative h-[190px] sm:h-[200px]">
@@ -468,7 +468,7 @@ function DeliveryPerformance({ d }: { d: DashboardData }) {
   const total = d.todayDel.length
   const donePct = total ? ((s.delivered + s.partial + s.failed) / total) * 100 : 0
   return (
-    <Panel title="Delivery performance today" description={`${total} ${t('stops')}`} actions={<ViewAll to="/distribution?tab=routes" />}>
+    <Panel title="Delivery performance today" description={`${total} ${t('stops')}`} actions={<ViewAll to="/distribution?tab=routes" />} bodyClassName="flex flex-col justify-center">
       {total ? (
         <div className="flex items-center gap-3">
           <div className="relative h-[170px] w-[46%] shrink-0">

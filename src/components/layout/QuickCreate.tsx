@@ -4,7 +4,7 @@
  */
 import { lazy, Suspense, useState, type ComponentType } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { ArrowRightLeft, Boxes, ClipboardCheck, FilePlus2, FileText, HandCoins, PackageMinus, Plus, ShoppingCart, Store, Truck, UserPlus, type LucideIcon } from 'lucide-react'
+import { ShoppingBasket, ArrowRightLeft, Boxes, ClipboardCheck, FilePlus2, FileText, HandCoins, PackageMinus, Plus, ShoppingCart, Store, Truck, UserPlus, type LucideIcon } from 'lucide-react'
 import { Sheet, SheetContent, SheetTitle } from '@/components/ui/sheet'
 import { Button } from '@/components/ui/button'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -34,6 +34,7 @@ interface Action {
   tone: string
 }
 const ACTIONS: Action[] = [
+  { key: 'pos', label: 'Counter sale', hint: 'Walk-in customer', icon: ShoppingBasket, module: 'pos', to: '/pos', tone: 'bg-brand-soft text-brand' },
   { key: 'so', label: 'Sales order', hint: 'Book an order for delivery', icon: FilePlus2, module: 'sales', dialog: SalesOrderDialog, tone: 'bg-brand-soft text-brand' },
   { key: 'inv', label: 'Direct invoice', hint: 'Warehouse counter sale', icon: FileText, module: 'sales', dialog: DirectInvoiceDialog, tone: 'bg-brand-soft text-brand' },
   { key: 'pay', label: 'Record payment', hint: 'Cash or bank collection', icon: HandCoins, module: 'collections', dialog: RecordPaymentDialog, tone: 'bg-success-soft text-success' },

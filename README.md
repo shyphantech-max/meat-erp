@@ -23,6 +23,33 @@ No backend, login server or paid APIs. All data lives in the browser's LocalStor
 **Profile → Reset demo data** (or Settings) to regenerate it. An untouched demo opened on a later
 day regenerates itself, so “today” always has activity.
 
+## Sign-in & roles
+
+All accounts use the password `Zad@2026` (change them in **Users & Access**).
+
+| Account | Role | Lands on |
+| --- | --- | --- |
+| owner@alwahameat.sa | Owner | everything, incl. Users & Access and Settings |
+| supervisor@alwahameat.sa | Supervisor | dispatch, stock, settlement review, counter |
+| accounts@alwahameat.sa | Accountant | invoices, collections, receivables/payables, reports |
+| store@alwahameat.sa | Store Keeper | GRN, inventory, van loading |
+| counter@alwahameat.sa | Counter Cashier | Walk-in Counter (POS) only |
+| faisal.harbi@alwahameat.sa (and the other drivers) | Driver | driver app only |
+
+The Owner can add users, create custom roles and tick module permissions per role in **Users & Access**.
+On desktop everyone gets the web layout; on phones the same accounts get an app layout with a bottom tab
+bar and a centre "+" for quick actions. The site can be installed to the home screen (web app manifest).
+
+## Deploy (Vercel)
+
+`vercel.json` rewrites every route to `index.html`, so refreshing a deep link works. Share previews use
+`public/og.png` (1200x630) via Open Graph / Twitter tags pointing at https://meat.erpdemo.xyz.
+
+## Media credits
+
+Sign-in background footage from Pexels (free licence): "White Broiler Chickens" (#4458054) and
+"A Flock of Sheep Grazing and Resting" (#5140591), stored in `public/media/`.
+
 ## Stack
 
 React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui (Radix) · Lucide · Recharts ·
@@ -56,9 +83,9 @@ React Router · Zustand (persisted) + Immer · TanStack Table · Sonner toasts.
 
 ## Demo data
 
-10 suppliers (6 international, 4 local) · 20 B2B customers · 15 chicken & mutton products · 3 warehouses
+10 suppliers (6 international, 4 local) · 20 B2B customers + a walk-in (counter) account · 15 chicken & mutton products · 3 warehouses
 (Riyadh, Jeddah, Dammam) · 8 drivers · 8 reefer vehicles · 30 purchase orders · 11 import shipments · 25 GRNs ·
-50 sales invoices · 40 deliveries · 35 payment collections · 8 daily settlements, plus 12 months of
+53 sales invoices (incl. 3 counter sales) · 40 deliveries · 38 payment collections · 8 daily settlements, plus 12 months of
 register-archive totals for the trend chart. Company and partner names are fictional.
 
 VAT is configurable (default 15%). Printed invoices are demo documents; the prototype does **not** claim ZATCA

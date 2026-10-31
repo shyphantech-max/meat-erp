@@ -26,6 +26,7 @@ const Settings = lazy(() => import('@/modules/settings'))
 const DriverApp = lazy(() => import('@/modules/driver-app'))
 const Login = lazy(() => import('@/modules/auth/Login'))
 const Access = lazy(() => import('@/modules/access'))
+const Pos = lazy(() => import('@/modules/pos'))
 
 // demo convenience: ?lang=ar / ?lang=en in any URL switches the interface language
 const urlLang = new URLSearchParams(window.location.search).get('lang')
@@ -66,6 +67,7 @@ export default function App() {
                 <Route path="reports" element={<Reports />} />
                 <Route path="settings" element={<Settings />} />
                 <Route path="access" element={<Access />} />
+                <Route path="pos" element={<Pos />} />
                 <Route path="*" element={<Navigate to="/" replace />} />
               </Route>
             </Routes>

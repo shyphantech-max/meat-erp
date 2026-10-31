@@ -187,7 +187,7 @@ export interface StockMovement {
   note?: string
 }
 
-export type BusinessType = 'restaurant' | 'hotel' | 'supermarket' | 'wholesale' | 'catering'
+export type BusinessType = 'restaurant' | 'hotel' | 'supermarket' | 'wholesale' | 'catering' | 'walk_in'
 export interface Customer {
   id: ID
   code: string

@@ -720,6 +720,8 @@ export interface PaymentInput {
   idempotencyKey?: string
   /** restrict auto-allocation */
   scope?: 'all' | 'today' | 'old'
+  /** counter sales: same amount twice in a row is normal (idempotency key still blocks double posting) */
+  allowRepeat?: boolean
 }
 export function recordPayment(db: DB, ctx: Ctx, input: PaymentInput): Result {
   const c = db.customers.find((x) => x.id === input.customerId)
@@ -734,7 +736,7 @@ export function recordPayment(db: DB, ctx: Ctx, input: PaymentInput): Result {
       return fail(`Bank reference ${input.bankRef} is already recorded`, 'DUPLICATE')
   }
   const nowMs = new Date(ctx.now).getTime()
-  const dupe = db.payments.find(
+  const dupe = !input.allowRepeat && db.payments.find(
     (p) => p.customerId === c.id && p.amount === amount && p.method === input.method && p.verification !== 'rejected' && Math.abs(new Date(p.createdAt).getTime() - nowMs) < 2 * 60 * 1000,
   )
   if (dupe) return fail(`Possible duplicate: ${dupe.receiptNo} for the same amount was recorded moments ago`, 'DUPLICATE')

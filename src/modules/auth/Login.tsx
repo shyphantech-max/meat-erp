@@ -22,6 +22,7 @@ import { BRAND } from '@/lib/brand'
 import { initials } from '@/lib/format'
 import { cn } from '@/lib/utils'
 import type { AppUser } from '@/types'
+import { BrandVideo } from './BrandVideo'
 
 export default function Login() {
   const t = useT()
@@ -132,6 +133,7 @@ export default function Login() {
     <div className="flex min-h-dvh bg-background">
       {/* brand panel */}
       <div className="relative hidden w-[46%] max-w-[640px] flex-col justify-between overflow-hidden bg-navy p-10 text-white lg:flex">
+        <BrandVideo />
         <div className="pointer-events-none absolute -end-40 -top-40 size-[520px] rounded-full border-[40px] border-brand/25" />
         <div className="pointer-events-none absolute -bottom-48 -start-24 size-[460px] rounded-full bg-brand/15 blur-2xl" />
         <div className="relative flex items-center gap-3">
